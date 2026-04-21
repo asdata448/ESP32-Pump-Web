@@ -175,6 +175,187 @@ const char* AP_SSID = "ESP32-PUMP";
 const char* AP_PASSWORD = "12345678";
 ```
 
+## 🔥 Firebase Cloud Firestore Integration
+
+Ứng dụng hỗ trợ **lưu trữ lịch sử bơm vào Firebase Cloud Firestore** với các tính năng:
+
+### Tính năng Firebase
+
+- ✅ **Tự động lưu lịch sử**: Lưu tự động khi phiên bơm hoàn thành/dừng/lỗi
+- ✅ **Real-time sync**: Cập nhật tự động khi có dữ liệu mới
+- ✅ **Multi-device**: Đồng bộ dữ liệu giữa nhiều thiết bị
+- ✅ **Lịch sử vĩnh viễn**: Lưu trữ không giới hạn (theo giới hạn Firebase)
+- ✅ **Demo mode**: Hoạt động độc lập mà không cần ESP32
+
+### Cấu hình Firebase
+
+#### Bước 1: Tạo Firebase Project
+
+1. Vào [Firebase Console](https://console.firebase.google.com/)
+2. Tạo project mới hoặc chọn project có sẵn
+3. **Enable Firestore Database**:
+   - Vào **Build** → **Firestore Database**
+   - Click **"Create database"**
+   - Chọn location: `asia-southeast1` (Singapore)
+   - Chọn **"Start in Test mode"**
+
+#### Bước 2: Lấy Firebase Config
+
+1. Vào **Project Settings** (icon bánh răng)
+2. Cuộn xuống **"Your apps"**
+3. Click **"</>"** icon (Web app)
+4. Copy Firebase config
+
+#### Bước 3: Cấu hình Environment Variables
+
+Tạo file `.env.local` trong thư mục `esp/`:
+
+```bash
+cp .env.local.example .env.local
+```
+
+Điền Firebase config vào `.env.local`:
+
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSy...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
+NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abcdef
+```
+
+⚠️ **Lưu ý:** File `.env.local` KHÔNG được đẩy lên Git (đã có trong `.gitignore`)
+
+#### Bước 4: Restart Development Server
+
+```bash
+# Stop server hiện tại (Ctrl+C)
+npm run dev
+```
+
+### Firestore Security Rules
+
+**Development (Test Mode):**
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+```
+
+**Production (Recommended):**
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /pump_history/{document} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+}
+```
+
+### Sử dụng Firebase History
+
+#### Trong Demo Mode
+
+1. Mở [http://localhost:3000/demo](http://localhost:3000/demo)
+2. Chạy một phiên demo bơm:
+   - Chọn loại ống tiêm → Set tốc độ/thể tích
+   - Prepare → Start → Hoàn thành hoặc Stop
+3. Vào panel **"Lịch sử"** → Tab **"Firebase"**
+4. Xem lịch sử được lưu tự động
+
+#### Test Firebase Connection
+
+1. Mở demo page
+2. Panel "Lịch sử" → Tab **"Firebase"**
+3. Click button **"Test save"**
+4. Nếu thấy **"Đã lưu bản ghi thử thành công!"** → Firebase hoạt động!
+
+#### Xem Dữ liệu trong Firebase Console
+
+1. Vào [Firebase Console](https://console.firebase.google.com/)
+2. Chọn project của bạn
+3. **Firestore Database** → **Data**
+4. Collection: `pump_history`
+
+### Cấu Trúc Dữ Liệu Firestore
+
+**Collection:** `pump_history`
+
+**Document Structure:**
+```json
+{
+  "id": "auto-generated",
+  "deviceId": "demo-device-12345",
+  "syringeType": "10CC",
+  "speedMlh": 5.0,
+  "volumeMl": 10.0,
+  "infusedVolumeMl": 10.0,
+  "totalTimeSec": 7200,
+  "status": "COMPLETED",
+  "timestamp": { "_seconds": 1234567890, "_nanoseconds": 0 },
+  "createdAt": { "_seconds": 1234567890, "_nanoseconds": 0 },
+  "notes": null,
+  "errorType": null
+}
+```
+
+**Trạng thái (status):**
+- `COMPLETED`: Phiên bơm hoàn thành thành công
+- `STOPPED`: Người dùng dừng thủ công
+- `ERROR`: Có lỗi xảy ra (tắc nghẽn, timeout, v.v.)
+
+### Firebase Free Tier Limits
+
+⚠️ **Lưu ý giới hạn miễn phí:**
+- 50K reads/ngày
+- 20K writes/ngày
+- 1GB storage
+- 1GB network transfer/ngày
+
+Để theo dõi usage, vào Firebase Console → **Usage**.
+
+### Xử Lý Sự Cố Firebase
+
+#### Lỗi: "No Firebase App '[DEFAULT]' has been created"
+
+**Nguyên nhân:** Environment variables không được load  
+**Giải pháp:**
+1. Kiểm tra file `.env.local` có tồn tại
+2. Restart dev server
+3. Kiểm tra tên biến đúng format
+
+#### Lỗi: "Missing or insufficient permissions"
+
+**Nguyên nhân:** Firestore Security Rules  
+**Giải pháp:**
+1. Firestore Database → **Rules**
+2. Set rules về Test mode hoặc production rules phù hợp
+3. Click **"Publish"**
+
+#### Dữ liệu không hiển thị
+
+**Kiểm tra:**
+1. Mở Console browser (F12) → Tab Console
+2. Tìm logs `[Firebase]`
+3. Kiểm tra Firebase Console → Firestore Database → Data
+
+### Tài Liệu Tham Khảo
+
+- 📘 **Hướng dẫn chi tiết**: [FIREBASE_QUICKSTART.md](FIREBASE_QUICKSTART.md)
+- 📘 **Hướng dẫn đầy đủ**: [FIREBASE_SETUP.md](FIREBASE_SETUP.md)
+- 📘 **Tổng kết tích hợp**: [FIREBASE_INTEGRATION_SUMMARY.md](FIREBASE_INTEGRATION_SUMMARY.md)
+- 🔗 [Firebase Firestore Docs](https://firebase.google.com/docs/firestore)
+- 🔗 [Firebase Web SDK](https://firebase.google.com/docs/web/setup)
+
 ## 📁 Cấu trúc dự án
 
 ```
