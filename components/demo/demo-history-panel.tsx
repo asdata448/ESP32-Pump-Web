@@ -29,7 +29,7 @@ export function DemoHistoryPanel({ history, onClear }: DemoHistoryPanelProps) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <History className="h-4 w-4 text-primary" />
-          <span className="font-semibold text-sm">Lich su 5 lan gan nhat</span>
+          <span className="font-semibold text-sm">Lịch sử 5 lần gần nhất</span>
         </div>
         {history.length > 0 && (
           <Button
@@ -53,7 +53,7 @@ export function DemoHistoryPanel({ history, onClear }: DemoHistoryPanelProps) {
               animate={{ opacity: 1 }}
               className="text-center py-8 text-muted-foreground text-sm"
             >
-              Chua co lich su bom
+              Chưa có lịch sử bơm
             </motion.div>
           ) : (
             history.map((record, index) => {
@@ -90,14 +90,14 @@ export function DemoHistoryPanel({ history, onClear }: DemoHistoryPanelProps) {
                     
                     <div className="flex items-center gap-1">
                       <Gauge className="h-3 w-3 text-muted-foreground" />
-                      <span className="font-mono">{record.speedMlh}</span>
+                      <span className="font-mono">{record.speedMlh ?? 0}</span>
                       <span className="text-muted-foreground">ml/h</span>
                     </div>
-                    
+
                     <div className="flex items-center gap-1">
                       <Droplets className="h-3 w-3 text-muted-foreground" />
-                      <span className="font-mono">{record.infusedVolumeMl.toFixed(1)}</span>
-                      <span className="text-muted-foreground">/{record.volumeMl}ml</span>
+                      <span className="font-mono">{(record.infusedVolumeMl ?? 0).toFixed(1)}</span>
+                      <span className="text-muted-foreground">/{record.volumeMl ?? 0}ml</span>
                     </div>
                   </div>
 

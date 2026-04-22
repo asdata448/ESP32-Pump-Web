@@ -70,7 +70,7 @@ export function ConnectionDialog({
       <div className="medical-panel relative z-10 w-full max-w-md p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">Ket noi ESP32</h2>
+          <h2 className="text-xl font-bold text-white">Kết nối ESP32</h2>
           <button 
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-secondary transition-colors"
@@ -90,13 +90,13 @@ export function ConnectionDialog({
               )}
               <div>
                 <div className="text-sm font-medium text-white">
-                  {isConnected && !isDemo ? 'Da ket noi' : 'Chua ket noi'}
+                  {isConnected && !isDemo ? 'Đã kết nối' : 'Chưa kết nối'}
                 </div>
                 {isConnected && !isDemo && (
                   <div className="text-xs text-muted-foreground">{baseUrl}</div>
                 )}
                 {isDemo && (
-                  <div className="text-xs text-warning">Dang o che do Demo</div>
+                  <div className="text-xs text-warning">Đang ở chế độ Demo</div>
                 )}
               </div>
             </div>
@@ -109,7 +109,7 @@ export function ConnectionDialog({
         {/* URL Input */}
         <div className="mb-4">
           <label className="text-sm text-muted-foreground mb-2 block">
-            Dia chi IP ESP32
+            Địa chỉ IP ESP32
           </label>
           <input
             type="text"
@@ -122,7 +122,7 @@ export function ConnectionDialog({
             className="w-full bg-input border border-border rounded-lg px-4 py-3 text-white font-mono focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
           <div className="mt-1 text-xs text-muted-foreground">
-            Mac dinh AP mode: http://192.168.4.1
+            Mặc định AP mode: http://192.168.4.1
           </div>
         </div>
 
@@ -136,12 +136,12 @@ export function ConnectionDialog({
             {testResult ? (
               <>
                 <CheckCircle className="h-5 w-5 text-success" />
-                <span className="text-sm text-success">Ket noi thanh cong!</span>
+                <span className="text-sm text-success">Kết nối thành công!</span>
               </>
             ) : (
               <>
                 <XCircle className="h-5 w-5 text-destructive" />
-                <span className="text-sm text-destructive">Khong the ket noi. Kiem tra IP va WiFi.</span>
+                <span className="text-sm text-destructive">Không thể kết nối. Kiểm tra IP và WiFi.</span>
               </>
             )}
           </div>
@@ -157,10 +157,10 @@ export function ConnectionDialog({
             {isTesting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Dang kiem tra...
+                Đang kiểm tra...
               </>
             ) : (
-              'Kiem tra ket noi'
+              'Kiểm tra kết nối'
             )}
           </button>
           
@@ -172,7 +172,7 @@ export function ConnectionDialog({
               }}
               className="btn-control btn-danger flex-1"
             >
-              Ngat ket noi
+              Ngắt kết nối
             </button>
           ) : (
             <button
@@ -183,10 +183,10 @@ export function ConnectionDialog({
               {isConnecting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Dang ket noi...
+                  Đang kết nối...
                 </>
               ) : (
-                'Ket noi'
+                'Kết nối'
               )}
             </button>
           )}

@@ -65,7 +65,7 @@ export function ControlsCard({
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Gamepad2 className="h-5 w-5" />
-          Dieu khien thu cong
+          Điều khiển thủ công
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -82,7 +82,7 @@ export function ControlsCard({
             ) : (
               <RotateCcw className="h-5 w-5" />
             )}
-            <span className="text-xs">Chuan bi</span>
+            <span className="text-xs">Chuẩn bị</span>
           </Button>
 
           {/* Start */}
@@ -96,7 +96,7 @@ export function ControlsCard({
             ) : (
               <PlayCircle className="h-5 w-5" />
             )}
-            <span className="text-xs">Bat dau</span>
+            <span className="text-xs">Bắt đầu</span>
           </Button>
 
           {/* Pause */}
@@ -111,7 +111,7 @@ export function ControlsCard({
             ) : (
               <PauseCircle className="h-5 w-5" />
             )}
-            <span className="text-xs">Tam dung</span>
+            <span className="text-xs">Tạm dừng</span>
           </Button>
 
           {/* Resume */}
@@ -126,7 +126,7 @@ export function ControlsCard({
             ) : (
               <PlayCircle className="h-5 w-5" />
             )}
-            <span className="text-xs">Tiep tuc</span>
+            <span className="text-xs">Tiếp tục</span>
           </Button>
 
           {/* Stop */}
@@ -141,7 +141,7 @@ export function ControlsCard({
             ) : (
               <StopCircle className="h-5 w-5" />
             )}
-            <span className="text-xs">Dung</span>
+            <span className="text-xs">Dừng</span>
           </Button>
 
           {/* Re-home */}
@@ -156,7 +156,7 @@ export function ControlsCard({
             ) : (
               <Home className="h-5 w-5" />
             )}
-            <span className="text-xs">Ve Home</span>
+            <span className="text-xs">Về Home</span>
           </Button>
         </div>
 
@@ -173,7 +173,7 @@ export function ControlsCard({
             ) : (
               <AlertTriangle className="mr-2 h-4 w-4" />
             )}
-            Xoa canh bao
+            Xóa cảnh báo
           </Button>
         )}
       </CardContent>

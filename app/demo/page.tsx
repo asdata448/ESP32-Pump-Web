@@ -28,13 +28,17 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { usePumpSimulation } from '@/hooks/use-pump-simulation'
+import { usePumpSimulationWithFirebase } from '@/hooks/use-pump-simulation-with-firebase'
 import { StateBadge } from '@/components/demo/state-badge'
 import { SyringeVisual } from '@/components/demo/syringe-visual'
 import { FSRGauge } from '@/components/demo/fsr-gauge'
 import { DemoControlPanel } from '@/components/demo/demo-control-panel'
 import { DemoHistoryPanel } from '@/components/demo/demo-history-panel'
 import { TechnicalSpecs } from '@/components/demo/technical-specs'
+import { FirebaseHistoryPanel } from '@/components/firebase/firebase-history-panel'
+import { savePumpHistory } from '@/lib/firebase'
 import { formatTime, SYRINGE_SPECS } from '@/lib/pump-types'
 import { SYRINGE_CALIBRATION, FSR_THRESHOLDS } from '@/lib/demo-types'
 import Link from 'next/link'
@@ -42,9 +46,17 @@ import Link from 'next/link'
 export default function DemoPage() {
   const [currentTime, setCurrentTime] = useState('--:--:--')
   const [showHistory, setShowHistory] = useState(false)
-  
-  const sim = usePumpSimulation()
+  const [historyTab, setHistoryTab] = useState<'local' | 'firebase'>('local')
+  const [firebaseEnabled, setFirebaseEnabled] = useState(true)
+
+  // Use Firebase-enabled simulation
+  const sim = usePumpSimulationWithFirebase({
+    firebaseEnabled,
+    autoSave: true,
+  })
+
   const { state, controlFlags, history, presentationMode, remainingTimeSec } = sim
+  const { firebaseHistory, firebaseLoading, firebaseError, deviceId } = sim
 
   // Update clock
   useEffect(() => {
@@ -143,8 +155,8 @@ export default function DemoPage() {
               <ChevronLeft className="h-5 w-5" />
             </Link>
             <div>
-              <h1 className="text-lg font-bold tracking-wide">MAY BOM TIEM DIEN</h1>
-              <p className="text-xs text-muted-foreground">Mo phong phan mem</p>
+              <h1 className="text-lg font-bold tracking-wide">MÁY BƠM TIÊM ĐIỆN</h1>
+              <p className="text-xs text-muted-foreground">Mô phỏng phần mềm</p>
             </div>
           </div>
 
@@ -180,7 +192,7 @@ export default function DemoPage() {
         <div className="max-w-6xl mx-auto flex items-center justify-center gap-2">
           <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
           <span className="text-xs font-medium text-primary">
-            Mo phong doc lap, khong can phan cung
+            Mô phỏng độc lập, không cần phần cứng
           </span>
         </div>
       </div>
@@ -231,11 +243,82 @@ export default function DemoPage() {
               disabled={state.state === 'BOOT'}
             />
 
-            {/* History Panel */}
-            <DemoHistoryPanel
-              history={history}
-              onClear={sim.clearHistory}
-            />
+            {/* History Panel with Tabs */}
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <History className="h-5 w-5" />
+                    Lịch sử
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFirebaseEnabled(!firebaseEnabled)}
+                    className={`h-7 ${firebaseEnabled ? 'text-success' : 'text-muted-foreground'}`}
+                  >
+                    {firebaseEnabled ? <CheckCircle2 className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                  </Button>
+                </div>
+                {/* Tabs */}
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => setHistoryTab('local')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      historyTab === 'local'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
+                    }`}
+                  >
+                    Local
+                  </button>
+                  <button
+                    onClick={() => setHistoryTab('firebase')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      historyTab === 'firebase'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary/50 text-muted-foreground hover:bg-secondary'
+                    }`}
+                    disabled={!firebaseEnabled}
+                  >
+                    Firebase
+                  </button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {historyTab === 'local' ? (
+                  <DemoHistoryPanel
+                    history={history}
+                    onClear={sim.clearHistory}
+                  />
+                ) : (
+                  <FirebaseHistoryPanel
+                    history={firebaseHistory}
+                    loading={firebaseLoading}
+                    error={firebaseError}
+                    deviceId={deviceId}
+                    onTestSave={async () => {
+                      // Test save function
+                      const result = await savePumpHistory({
+                        syringeType: '10CC',
+                        speedMlh: 5,
+                        volumeMl: 3,
+                        infusedVolumeMl: 3,
+                        totalTimeSec: 2160, // 36 minutes
+                        status: 'COMPLETED',
+                        deviceIdString: deviceId,
+                        notes: 'Bản ghi thử từ dashboard',
+                      })
+                      if (result) {
+                        alert('Đã lưu bản ghi thử thành công!')
+                      } else {
+                        alert('Không thể lưu bản ghi. Kiểm tra Firebase config.')
+                      }
+                    }}
+                  />
+                )}
+              </CardContent>
+            </Card>
 
             {/* Technical Specs */}
             <TechnicalSpecs />
@@ -261,7 +344,7 @@ export default function DemoPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">Lich su bom</h2>
+                <h2 className="font-semibold">Lịch sử bơm</h2>
                 <Button variant="ghost" size="icon" onClick={() => setShowHistory(false)}>
                   <X className="h-4 w-4" />
                 </Button>
@@ -287,8 +370,8 @@ function BootScreen() {
         <Loader2 className="h-16 w-16 text-primary" />
       </motion.div>
       <div className="text-center">
-        <h2 className="text-xl font-bold mb-2">DANG KHOI DONG...</h2>
-        <p className="text-sm text-muted-foreground">Khoi tao he thong may bom tiem</p>
+        <h2 className="text-xl font-bold mb-2">ĐANG KHỞI ĐỘNG...</h2>
+        <p className="text-sm text-muted-foreground">Khởi tạo hệ thống máy bơm tiêm</p>
       </div>
       <div className="flex gap-1">
         {[0, 1, 2].map((i) => (
@@ -309,8 +392,8 @@ function SyringeSelectScreen({ onSelect }: { onSelect: (type: '10CC' | '20CC') =
     <div className="h-full flex flex-col items-center justify-center gap-8">
       <div className="text-center">
         <Syringe className="h-12 w-12 text-primary mx-auto mb-4" />
-        <h2 className="text-xl font-bold mb-2">CHON LOAI ONG TIEM</h2>
-        <p className="text-sm text-muted-foreground">Chon loai ong tiem phu hop</p>
+        <h2 className="text-xl font-bold mb-2">CHỌN LOẠI ỐNG TIÊM</h2>
+        <p className="text-sm text-muted-foreground">Chọn loại ống tiêm phù hợp</p>
       </div>
       
       <div className="flex gap-4">
@@ -349,25 +432,25 @@ function MainMenuScreen({
     <div className="h-full flex flex-col items-center justify-center gap-8">
       <div className="text-center">
         <Home className="h-12 w-12 text-primary mx-auto mb-4" />
-        <h2 className="text-xl font-bold mb-2">MAN HINH CHINH</h2>
-        <p className="text-sm text-muted-foreground">Chon thao tac can thuc hien</p>
+        <h2 className="text-xl font-bold mb-2">MÀN HÌNH CHÍNH</h2>
+        <p className="text-sm text-muted-foreground">Chọn thao tác cần thực hiện</p>
       </div>
       
       <div className="grid grid-cols-1 gap-3 w-full max-w-xs">
         <Button onClick={onSetup} className="btn-primary h-14 text-base gap-2">
           <Settings className="h-5 w-5" />
-          Bat dau cai dat
+          Bắt đầu cài đặt
           <ChevronRight className="h-4 w-4 ml-auto" />
         </Button>
         
         <Button onClick={onHistory} variant="outline" className="h-12 gap-2">
           <History className="h-4 w-4" />
-          Xem lich su
+          Xem lịch sử
         </Button>
         
         <Button onClick={onReset} variant="ghost" className="h-10 gap-2 text-muted-foreground">
           <RotateCcw className="h-4 w-4" />
-          Reset demo
+          Reset demo (khởi động lại)
         </Button>
       </div>
     </div>
@@ -431,7 +514,7 @@ function SetupScreen({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Settings className="h-6 w-6 text-primary" />
-          <h2 className="text-lg font-bold">CAI DAT THONG SO</h2>
+          <h2 className="text-lg font-bold">CÀI ĐẶT THÔNG SỐ</h2>
         </div>
         <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
           {syringeType}
@@ -499,10 +582,10 @@ function SetupScreen({
       <div className="flex gap-3 mt-6">
         <Button onClick={onBack} variant="outline" className="flex-1 h-12">
           <ChevronLeft className="h-4 w-4 mr-2" />
-          Quay lai
+          Quay lại
         </Button>
         <Button onClick={onPrepare} className="btn-primary flex-1 h-12">
-          Chuan bi
+          Chuẩn bị
           <ChevronRight className="h-4 w-4 ml-2" />
         </Button>
       </div>
@@ -520,10 +603,10 @@ function PrepareScreen({
   contactFound: boolean
 }) {
   const steps = [
-    { id: 'HOMING', label: 'Dang ve vi tri home...', done: homed },
-    { id: 'FINDING_CONTACT', label: 'Dang tim tiep xuc piston...', done: contactFound },
-    { id: 'RECOGNIZED', label: 'Da nhan dien ong tiem', done: stage === 'RECOGNIZED' || stage === 'COMPLETE' },
-    { id: 'COMPLETE', label: 'San sang truyen', done: stage === 'COMPLETE' },
+    { id: 'HOMING', label: 'Đang về vị trí home...', done: homed },
+    { id: 'FINDING_CONTACT', label: 'Đang tìm tiếp xúc piston...', done: contactFound },
+    { id: 'RECOGNIZED', label: 'Đã nhận diện ống tiêm', done: stage === 'RECOGNIZED' || stage === 'COMPLETE' },
+    { id: 'COMPLETE', label: 'Sẵn sàng truyền', done: stage === 'COMPLETE' },
   ]
 
   const currentIndex = steps.findIndex(s => s.id === stage)
@@ -538,7 +621,7 @@ function PrepareScreen({
         >
           <Loader2 className="h-12 w-12 text-primary" />
         </motion.div>
-        <h2 className="text-xl font-bold mb-2">DANG CHUAN BI...</h2>
+        <h2 className="text-xl font-bold mb-2">ĐANG CHUẨN BỊ...</h2>
       </div>
 
       <div className="w-full max-w-sm space-y-3">
@@ -593,7 +676,7 @@ function ReadyScreen({
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <CheckCircle2 className="h-6 w-6 text-success" />
-        <h2 className="text-lg font-bold text-success">SAN SANG TRUYEN</h2>
+        <h2 className="text-lg font-bold text-success">SẴN SÀNG TRUYỀN</h2>
       </div>
 
       {/* Summary */}
@@ -628,11 +711,11 @@ function ReadyScreen({
         <div className="col-span-2 flex gap-3">
           <div className={`flex-1 p-3 rounded-lg flex items-center gap-2 ${state.homed ? 'bg-success/10' : 'bg-muted/30'}`}>
             <div className={`w-3 h-3 rounded-full ${state.homed ? 'bg-success' : 'bg-muted-foreground'}`} />
-            <span className="text-sm">Da ve home</span>
+            <span className="text-sm">Đã về home</span>
           </div>
           <div className={`flex-1 p-3 rounded-lg flex items-center gap-2 ${state.contactFound ? 'bg-success/10' : 'bg-muted/30'}`}>
             <div className={`w-3 h-3 rounded-full ${state.contactFound ? 'bg-success' : 'bg-muted-foreground'}`} />
-            <span className="text-sm">Tiep xuc piston</span>
+            <span className="text-sm">Tiếp xúc piston</span>
           </div>
         </div>
       </div>
@@ -641,15 +724,15 @@ function ReadyScreen({
       <div className="flex gap-3 mt-6">
         <Button onClick={onEdit} variant="outline" className="h-12">
           <Settings className="h-4 w-4 mr-2" />
-          Sua
+          SỬA
         </Button>
         <Button onClick={onRehome} variant="outline" className="h-12">
           <RotateCcw className="h-4 w-4 mr-2" />
-          Ve home
+          Về home
         </Button>
         <Button onClick={onStart} className="btn-primary flex-1 h-14 text-lg">
           <Play className="h-5 w-5 mr-2" />
-          BAT DAU
+          BẮT ĐẦU
         </Button>
       </div>
     </div>
@@ -673,7 +756,7 @@ function RunningScreen({
     <div className="h-full flex flex-col">
       {/* Status Bar */}
       <div className={`status-bar mb-6 ${state.paused ? 'status-bar-paused' : 'status-bar-running'}`}>
-        {state.paused ? 'TAM DUNG' : 'DANG TRUYEN'}
+        {state.paused ? 'TẠM DỪNG' : 'ĐANG TRUYỀN'}
       </div>
 
       {/* Main Content */}
@@ -699,14 +782,14 @@ function RunningScreen({
             </div>
           </div>
           <div className="param-row">
-            <span className="param-label">Da truyen</span>
+            <span className="param-label">Đã truyền</span>
             <div className="flex items-baseline gap-1">
               <span className="value-large">{state.infusedVolumeMl.toFixed(2)}</span>
               <span className="value-unit">ml</span>
             </div>
           </div>
           <div className="param-row">
-            <span className="param-label">Thoi gian con lai</span>
+            <span className="param-label">Thời gian còn lại</span>
             <span className="value-medium">{formatTime(remainingTime)}</span>
           </div>
         </div>
@@ -726,7 +809,7 @@ function RunningScreen({
       {/* Progress */}
       <div className="mt-4">
         <div className="flex justify-between text-xs text-muted-foreground mb-2">
-          <span>Tien trinh</span>
+          <span>Tiến trình</span>
           <span>{state.progressPercent.toFixed(1)}%</span>
         </div>
         <div className="progress-track h-3">
@@ -745,17 +828,17 @@ function RunningScreen({
         {state.paused ? (
           <Button onClick={onResume} className="btn-primary flex-1 h-14">
             <Play className="h-5 w-5 mr-2" />
-            TIEP TUC
+            TIẾP TỤC
           </Button>
         ) : (
           <Button onClick={onPause} className="flex-1 h-14 btn-secondary">
             <Pause className="h-5 w-5 mr-2" />
-            TAM DUNG
+            TẠM DỪNG
           </Button>
         )}
         <Button onClick={onStop} variant="destructive" className="h-14 px-8">
           <Square className="h-5 w-5 mr-2" />
-          DUNG
+          DỪNG
         </Button>
       </div>
     </div>
@@ -782,27 +865,28 @@ function ErrorScreen({
       
       <div className="text-center">
         <h2 className="text-2xl font-bold text-destructive mb-2">
-          {errorType === 'OCCLUSION' ? 'NGHEN ONG!' : 'LOI HE THONG!'}
+          {errorType === 'OCCLUSION' ? 'TẮC ỐNG!' : 'LỖI HỆ THỐNG!'}
         </h2>
         <p className="text-muted-foreground">
           {errorType === 'OCCLUSION' 
-            ? 'Phat hien nghen trong qua trinh bom. Vui long kiem tra ong tiem.'
-            : 'Da xay ra loi. Vui long thu lai.'}
+            ? 'Phát hiện nghẽn trong quá trình bơm. Vui lòng kiểm tra ống tiêm.'
+       
+            : 'Đã xảy ra lỗi. Vui lòng thử lại.'}
         </p>
       </div>
 
       <div className="status-bar status-bar-error w-full max-w-xs">
-        LOI - {errorType}
+        LỖI - {errorType}
       </div>
 
       <div className="flex gap-3">
         <Button onClick={onReset} className="btn-primary h-12">
           <RotateCcw className="h-4 w-4 mr-2" />
-          Xoa canh bao
+          Xóa cảnh báo
         </Button>
         <Button onClick={onBack} variant="outline" className="h-12">
           <ChevronLeft className="h-4 w-4 mr-2" />
-          Quay lai
+          Quay lại màn hình chính
         </Button>
       </div>
     </div>
@@ -827,9 +911,9 @@ function DoneScreen({
       </motion.div>
       
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-success mb-2">HOAN THANH!</h2>
+        <h2 className="text-2xl font-bold text-success mb-2">HOÀN THÀNH!</h2>
         <p className="text-muted-foreground">
-          Da truyen thanh cong {state.infusedVolumeMl.toFixed(2)} ml
+          Đã truyền thành công {state.infusedVolumeMl.toFixed(2)} ml
         </p>
       </div>
 
@@ -845,17 +929,17 @@ function DoneScreen({
           <VolumeX className="h-5 w-5 text-muted-foreground" />
         )}
         <span className="text-sm text-muted-foreground">
-          {state.buzzerOn ? 'Buzzer dang keu' : 'Buzzer tat'}
+          {state.buzzerOn ? 'Buzzer đang kêu' : 'Buzzer tắt'}
         </span>
       </motion.div>
 
       <div className="status-bar status-bar-ready w-full max-w-xs">
-        HOAN THANH
+        HOÀN THÀNH
       </div>
 
       <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
         <div className="medical-panel-inner p-3 rounded-lg text-center">
-          <div className="text-xs text-muted-foreground mb-1">Da truyen</div>
+          <div className="text-xs text-muted-foreground mb-1">Đã truyền</div>
           <div className="text-xl font-mono text-primary">{state.infusedVolumeMl.toFixed(2)} ml</div>
         </div>
         <div className="medical-panel-inner p-3 rounded-lg text-center">
@@ -866,7 +950,7 @@ function DoneScreen({
 
       <Button onClick={onBack} className="btn-primary h-12 px-8">
         <ChevronLeft className="h-4 w-4 mr-2" />
-        Quay lai man hinh chinh
+        Quay lại màn hình chính
       </Button>
     </div>
   )

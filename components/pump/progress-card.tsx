@@ -67,18 +67,18 @@ export function ProgressCard({ status }: ProgressCardProps) {
         <div className="flex items-center justify-between rounded-lg bg-muted p-3">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Activity className="h-4 w-4" />
-            <span className="text-sm">So buoc</span>
+            <span className="text-sm">Số bước</span>
           </div>
           <p className="font-mono text-sm">
-            <span className="font-bold">{status.steps_completed.toLocaleString()}</span>
-            <span className="text-muted-foreground"> / {status.steps_total.toLocaleString()}</span>
+            <span className="font-bold">{(status.steps_completed ?? 0).toLocaleString()}</span>
+            <span className="text-muted-foreground"> / {(status.steps_total ?? 0).toLocaleString()}</span>
           </p>
         </div>
 
         {/* Speed Info */}
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">Toc do hien tai</span>
-          <span className="font-mono font-medium">{status.speed_mlh} ml/h</span>
+          <span className="text-muted-foreground">Tốc độ hiện tại</span>
+          <span className="font-mono font-medium">{(status.speed_mlh ?? 0)} ml/h</span>
         </div>
 
         {/* Syringe Info */}

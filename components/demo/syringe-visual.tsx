@@ -102,7 +102,12 @@ export function SyringeVisual({
         >
           <div className="w-2 h-2 rounded-full bg-success" />
           <span className="text-xs text-success font-medium">
-            {isPaused ? 'TAM DUNG' : 'DANG BOM'}
+            <br>
+            </br>
+            <br>
+            </br>
+            {isPaused ? 'TẠM DỪNG' : 'ĐANG BƠM'}
+           
           </span>
         </motion.div>
       )}

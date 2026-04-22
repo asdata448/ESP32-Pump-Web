@@ -49,7 +49,7 @@ export function DemoControlPanel({
       >
         <div className="flex items-center gap-2">
           <Gauge className="h-4 w-4 text-primary" />
-          <span className="font-semibold text-sm">Bang dieu khien mo phong</span>
+          <span className="font-semibold text-sm">Bảng điều khiển mô phỏng</span>
         </div>
         {isExpanded ? (
           <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -75,7 +75,7 @@ export function DemoControlPanel({
                 ) : (
                   <WifiOff className="h-4 w-4 text-muted-foreground" />
                 )}
-                <span className="text-sm">Mo phong phan cung</span>
+                <span className="text-sm">Mô phỏng phần cứng</span>
               </div>
               <Switch
                 checked={controlFlags.simulateHardware}
@@ -87,7 +87,7 @@ export function DemoControlPanel({
             {/* FSR Manual Control */}
             <div className="p-3 medical-panel-inner rounded-lg space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm">Gia tri FSR thu cong</span>
+                <span className="text-sm">Giá trị FSR thủ công</span>
                 <span className="text-sm font-mono text-primary">
                   {controlFlags.manualFsrValue}
                 </span>
@@ -102,9 +102,9 @@ export function DemoControlPanel({
                 className="w-full"
               />
               <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>Khong tai (0-450)</span>
-                <span>Tiep xuc (450-2000)</span>
-                <span>Nghen ({'>'}2000)</span>
+                <span>Không tải (0-450)</span>
+                <span>Tiếp xúc (450-2000)</span>
+                <span>Nghẽn ({'>'}2000)</span>
               </div>
             </div>
 
@@ -120,7 +120,7 @@ export function DemoControlPanel({
                 }`}
               >
                 <CircleDot className={`h-4 w-4 ${controlFlags.manualContactDetected ? 'text-success' : 'text-muted-foreground'}`} />
-                <span className="text-xs">Tiep xuc piston</span>
+                <span className="text-xs">Tiếp xúc piston</span>
               </button>
 
               <button
@@ -146,7 +146,7 @@ export function DemoControlPanel({
                 className="w-full gap-2"
               >
                 <AlertTriangle className="h-4 w-4" />
-                Gay loi nghen
+                Gây lỗi nghẽn
               </Button>
 
               <Button
@@ -155,13 +155,13 @@ export function DemoControlPanel({
                 className="w-full gap-2 btn-primary"
               >
                 <Play className="h-4 w-4" />
-                {isAutoDemo ? 'Dang chay demo...' : 'Chay kich ban demo tu dong'}
+                {isAutoDemo ? 'Đang chạy demo...' : 'Chạy kịch bản demo tự động'}
               </Button>
             </div>
 
             {/* Online/Offline Toggle */}
             <div className="flex items-center justify-between p-3 medical-panel-inner rounded-lg">
-              <span className="text-sm">Gia lap trang thai</span>
+              <span className="text-sm">Giả lập trạng thái</span>
               <div className="flex items-center gap-2">
                 <span className={`text-xs ${controlFlags.forceOnline ? 'text-success' : 'text-muted-foreground'}`}>
                   {controlFlags.forceOnline ? 'Online' : 'Offline'}

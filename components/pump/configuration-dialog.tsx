@@ -20,9 +20,9 @@ export function ConfigurationDialog({
   onSaveConfig,
   onPrepare
 }: ConfigurationDialogProps) {
-  const [syringeIndex, setSyringeIndex] = useState(status.syringe_index)
-  const [speed, setSpeed] = useState(status.speed_mlh.toString())
-  const [volume, setVolume] = useState(status.volume_ml.toString())
+  const [syringeIndex, setSyringeIndex] = useState(status.syringe_index ?? 0)
+  const [speed, setSpeed] = useState((status.speed_mlh ?? 0).toString())
+  const [volume, setVolume] = useState((status.volume_ml ?? 0).toString())
   const [isSaving, setIsSaving] = useState(false)
 
   if (!isOpen) return null
@@ -56,7 +56,7 @@ export function ConfigurationDialog({
       <div className="medical-panel relative z-10 w-full max-w-md p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-white">Cai dat truyen dich</h2>
+          <h2 className="text-xl font-bold text-white">Cài đặt truyền dịch</h2>
           <button 
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-secondary transition-colors"
@@ -69,7 +69,7 @@ export function ConfigurationDialog({
         <div className="mb-4">
           <label className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <Syringe className="h-4 w-4" />
-            Loai ong tiem
+            Loại ống tiêm
           </label>
           <div className="grid grid-cols-2 gap-2">
             {SYRINGE_SPECS.map((spec, index) => (
@@ -93,7 +93,7 @@ export function ConfigurationDialog({
         <div className="mb-4">
           <label className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <Gauge className="h-4 w-4" />
-            Toc do truyen (ml/h)
+            Tốc độ truyền (ml/h)
           </label>
           <input
             type="number"
@@ -106,7 +106,7 @@ export function ConfigurationDialog({
             placeholder="1.0"
           />
           <div className="mt-1 text-xs text-muted-foreground">
-            Pham vi: 0.1 - 500 ml/h
+            Phạm vi: 0.1 - 500 ml/h
           </div>
         </div>
 
@@ -114,7 +114,7 @@ export function ConfigurationDialog({
         <div className="mb-6">
           <label className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <Droplet className="h-4 w-4" />
-            The tich truyen (ml)
+            Thể tích truyền (ml)
           </label>
           <input
             type="number"
@@ -127,7 +127,7 @@ export function ConfigurationDialog({
             placeholder="5"
           />
           <div className="mt-1 text-xs text-muted-foreground">
-            Toi da: {syringeIndex === 0 ? 10 : 20} ml ({SYRINGE_SPECS[syringeIndex]?.name})
+            Tối đa: {syringeIndex === 0 ? 10 : 20} ml ({SYRINGE_SPECS[syringeIndex]?.name})
           </div>
         </div>
 
@@ -137,7 +137,7 @@ export function ConfigurationDialog({
             onClick={onClose}
             className="btn-control btn-secondary flex-1"
           >
-            Huy
+            Hủy
           </button>
           <button
             onClick={handleSave}
@@ -145,11 +145,11 @@ export function ConfigurationDialog({
             className="btn-control btn-primary flex-1"
           >
             {isSaving ? (
-              'Dang luu...'
+              'Đang lưu...'
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                Luu & Chuan bi
+                Lưu & Chuẩn bị
               </>
             )}
           </button>

@@ -30,9 +30,9 @@ export function FSRGauge({
 
   // Determine status text
   const getStatus = () => {
-    if (value >= occlusionThreshold) return { text: 'NGHEN', color: 'text-destructive' }
-    if (value >= presenceThreshold) return { text: 'TIEP XUC', color: 'text-success' }
-    return { text: 'KHONG TAI', color: 'text-muted-foreground' }
+    if (value >= occlusionThreshold) return { text: 'TẮC', color: 'text-destructive' }
+    if (value >= presenceThreshold) return { text: 'TIẾP XÚC', color: 'text-success' }
+    return { text: 'KHÔNG TẢI', color: 'text-muted-foreground' }
   }
 
   const status = getStatus()
@@ -41,7 +41,7 @@ export function FSRGauge({
     <div className="space-y-2">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-muted-foreground">Cam bien FSR</span>
+        <span className="text-sm font-medium text-muted-foreground">Cảm biến FSR</span>
         <span className={`text-xs font-bold ${status.color}`}>{status.text}</span>
       </div>
 

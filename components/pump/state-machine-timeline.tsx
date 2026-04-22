@@ -16,7 +16,7 @@ export function StateMachineTimeline({ currentState }: StateMachineTimelineProps
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg">Quy trinh hoat dong</CardTitle>
+        <CardTitle className="text-lg">Quy trình hoạt động</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="relative">
@@ -64,7 +64,7 @@ export function StateMachineTimeline({ currentState }: StateMachineTimelineProps
                         ? 'bg-destructive/10 text-destructive' 
                         : 'bg-primary/10 text-primary'
                     }`}>
-                      Hien tai
+                      Hiện tại
                     </span>
                   )}
                 </div>

@@ -22,10 +22,10 @@ export function MedicalHeader({
         {/* Left - Title */}
         <div className="flex flex-col">
           <h1 className="text-xl font-bold text-white tracking-wide uppercase">
-            May Bom Tiem Dien
+            Máy Bơm Tiêm Điện
           </h1>
           <span className="text-sm text-muted-foreground">
-            Giam sat & dieu khien
+            Giám sát & điều khiển
           </span>
         </div>
 
@@ -46,7 +46,7 @@ export function MedicalHeader({
           <button 
             onClick={onSettingsClick}
             className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-            aria-label="Cai dat"
+            aria-label="Cài đặt"
           >
             <Settings className="h-5 w-5 text-muted-foreground hover:text-white transition-colors" />
           </button>
@@ -57,7 +57,7 @@ export function MedicalHeader({
       {isDemo && (
         <div className="max-w-6xl mx-auto mt-3">
           <div className="bg-warning/15 border border-warning/25 rounded-lg px-4 py-2 text-sm text-warning text-center">
-            <span className="font-semibold">CHE DO DEMO</span> - Du lieu mo phong, khong ket noi ESP32
+            <span className="font-semibold">CHẾ ĐỘ DEMO</span> - Dữ liệu mô phỏng, không kết nối ESP32
           </div>
         </div>
       )}

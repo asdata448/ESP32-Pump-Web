@@ -10,8 +10,8 @@ const beVietnamPro = Be_Vietnam_Pro({
 })
 
 export const metadata: Metadata = {
-  title: 'May bom tiem dien ESP32',
-  description: 'He thong giam sat va dieu khien may bom tiem dien qua WiFi',
+  title: 'Máy bơm tiêm điện ESP32',
+  description: 'Hệ thống giám sát và điều khiển máy bơm tiêm điện qua WiFi',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -43,7 +43,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
-      <body className={`${beVietnamPro.variable} font-sans antialiased`}>
+      <body className={`${beVietnamPro.variable} font-sans antialiased`} suppressHydrationWarning>
         {children}
         <Analytics />
       </body>

@@ -16,10 +16,10 @@ function getAlertInfo(status: PumpStatus): { type: AlertType; message: string; d
   if (status.state === 'ERROR' || status.fsr_alert) {
     return {
       type: 'error',
-      message: 'CANH BAO NGHEN',
-      description: status.fsr_alert 
-        ? `Gia tri FSR: ${status.fsr_raw} vuot nguong ${status.fsr_occlusion_threshold}`
-        : 'Da phat hien loi he thong'
+      message: 'CẢNH BÁO TẮC',
+      description: status.fsr_alert
+        ? `Giá trị FSR: ${status.fsr_raw} vượt ngưỡng ${status.fsr_occlusion_threshold}`
+        : 'Đã phát hiện lỗi hệ thống'
     }
   }
 
@@ -27,8 +27,8 @@ function getAlertInfo(status: PumpStatus): { type: AlertType; message: string; d
   if (status.paused) {
     return {
       type: 'warning',
-      message: 'DA TAM DUNG',
-      description: 'Bom dang tam dung. Nhan "Tiep tuc" de tiep tuc bom.'
+      message: 'ĐÃ TẠM DỪNG',
+      description: 'Bơm đang tạm dừng. Nhấn "Tiếp tục" để tiếp tục bơm.'
     }
   }
 
@@ -36,8 +36,8 @@ function getAlertInfo(status: PumpStatus): { type: AlertType; message: string; d
   if (status.pump_running && !status.paused) {
     return {
       type: 'info',
-      message: 'DANG BOM',
-      description: `Toc do: ${status.speed_mlh} ml/h - The tich: ${status.volume_ml} ml`
+      message: 'ĐANG BƠM',
+      description: `Tốc độ: ${status.speed_mlh} ml/h - Thể tích: ${status.volume_ml} ml`
     }
   }
 
@@ -45,8 +45,8 @@ function getAlertInfo(status: PumpStatus): { type: AlertType; message: string; d
   if (status.state === 'READY' && status.contact_found && status.homed) {
     return {
       type: 'success',
-      message: 'SAN SANG',
-      description: 'He thong da san sang. Nhan "Bat dau" de bat dau bom.'
+      message: 'SẴN SÀNG',
+      description: 'Hệ thống đã sẵn sàng. Nhấn "Bắt đầu" để bắt đầu bơm.'
     }
   }
 
@@ -54,8 +54,8 @@ function getAlertInfo(status: PumpStatus): { type: AlertType; message: string; d
   if ((status.state === 'READY' || status.state === 'PREPARE' || status.state === 'SETUP') && !status.contact_found) {
     return {
       type: 'warning',
-      message: 'CHUA CHUAN BI',
-      description: 'Vui long nhan "Chuan bi" de he thong ve home va tim piston truoc khi bat dau bom.'
+      message: 'CHƯA CHUẨN BỊ',
+      description: 'Vui lòng nhấn "Chuẩn bị" để hệ thống về home và tìm piston trước khi bắt đầu bơm.'
     }
   }
 
@@ -63,8 +63,8 @@ function getAlertInfo(status: PumpStatus): { type: AlertType; message: string; d
   if (status.state === 'DONE') {
     return {
       type: 'success',
-      message: 'HOAN THANH',
-      description: 'Qua trinh bom da hoan tat thanh cong.'
+      message: 'HOÀN THÀNH',
+      description: 'Quá trình bơm đã hoàn tất thành công.'
     }
   }
 
@@ -109,7 +109,7 @@ export function AlertBanner({ status, onResetAlarm }: AlertBannerProps) {
           className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
         >
           <X className="mr-1 h-4 w-4" />
-          Xoa canh bao
+          Xóa cảnh báo
         </Button>
       )}
     </div>

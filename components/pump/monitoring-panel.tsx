@@ -55,25 +55,25 @@ export function MonitoringPanel({
   }
 
   const getStatusText = () => {
-    if (status.fsr_alert) return 'CANH BAO NGHEN'
-    if (status.pump_running && !status.paused) return 'DANG TRUYEN'
-    if (status.paused) return 'TAM DUNG'
-    if (status.state === 'READY' && status.contact_found) return 'SAN SANG'
-    if (!status.contact_found && (status.state === 'READY' || status.state === 'SETUP' || status.state === 'PREPARE')) return 'CAN CHUAN BI'
+    if (status.fsr_alert) return 'CẢNH BÁO TẮC'
+    if (status.pump_running && !status.paused) return 'ĐANG TRUYỀN'
+    if (status.paused) return 'TẠM DỪNG'
+    if (status.state === 'READY' && status.contact_found) return 'SẴN SÀNG'
+    if (!status.contact_found && (status.state === 'READY' || status.state === 'SETUP' || status.state === 'PREPARE')) return 'CẦN CHUẨN BỊ'
     return STATE_LABELS[status.state] || status.state
   }
 
-  const latestAlert = status.fsr_alert 
-    ? 'Phat hien ap luc cao - Kiem tra nghen!'
+  const latestAlert = status.fsr_alert
+    ? 'Phát hiện áp lực cao - Kiểm tra tắc!'
     : !status.contact_found
-      ? 'Chua nhan dien ong - Nhan "Chuan bi"'
-      : 'He thong san sang'
+      ? 'Chưa nhận diện ống - Nhấn "Chuẩn bị"'
+      : 'Hệ thống sẵn sàng'
 
   return (
     <div className="medical-panel p-4">
       {/* Syringe Type Header */}
       <div className="syringe-header mb-4">
-        <span className="text-sm text-muted-foreground">Ong: </span>
+        <span className="text-sm text-muted-foreground">Ống: </span>
         <span className="text-sm font-semibold text-white">
           Vinahankook {syringeSpec.name}
         </span>
@@ -83,34 +83,34 @@ export function MonitoringPanel({
       <div className="medical-panel-inner mb-4">
         {/* Speed */}
         <div className="param-row">
-          <span className="param-label">Toc do</span>
+          <span className="param-label">Tốc độ</span>
           <div className="flex items-baseline">
-            <span className="value-large">{status.speed_mlh.toFixed(1)}</span>
+            <span className="value-large">{(status.speed_mlh ?? 0).toFixed(1)}</span>
             <span className="value-unit">ml/h</span>
           </div>
         </div>
 
         {/* Volume */}
         <div className="param-row">
-          <span className="param-label">The tich</span>
+          <span className="param-label">Thể tích</span>
           <div className="flex items-baseline">
-            <span className="value-large">{status.volume_ml}</span>
+            <span className="value-large">{status.volume_ml ?? 0}</span>
             <span className="value-unit">ml</span>
           </div>
         </div>
 
         {/* Infused Volume */}
         <div className="param-row">
-          <span className="param-label">Da truyen</span>
+          <span className="param-label">Đã truyền</span>
           <div className="flex items-baseline">
-            <span className="value-large">{infusedVolume.toFixed(1)}</span>
+            <span className="value-large">{(infusedVolume ?? 0).toFixed(1)}</span>
             <span className="value-unit">ml</span>
           </div>
         </div>
 
         {/* Time Remaining */}
         <div className="param-row">
-          <span className="param-label">Thoi gian con lai</span>
+          <span className="param-label">Thời gian còn lại</span>
           <div className="flex items-baseline">
             <span className="value-large">{formatTime(status.remaining_sec)}</span>
           </div>
@@ -151,13 +151,13 @@ export function MonitoringPanel({
         }}
       >
         <Sliders className="h-5 w-5" />
-        Dieu khien
+        Điều khiển
       </button>
 
       {/* Last Update Footer */}
       <div className="mt-4 flex justify-between text-xs text-muted-foreground border-t border-border/30 pt-3">
-        <span suppressHydrationWarning>Cap nhat: {currentTime}</span>
-        <span suppressHydrationWarning>Cap nhat: {currentTime}</span>
+        <span suppressHydrationWarning>Cập nhật: {currentTime}</span>
+        <span suppressHydrationWarning>Cập nhật: {currentTime}</span>
       </div>
     </div>
   )

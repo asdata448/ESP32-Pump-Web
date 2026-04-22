@@ -81,18 +81,18 @@ export function ControlPanel({
       <div className="medical-panel-inner mb-4">
         {/* Speed */}
         <div className="param-row">
-          <span className="param-label">Toc do</span>
+          <span className="param-label">Tốc độ</span>
           <div className="flex items-baseline">
-            <span className="value-large">{status.speed_mlh.toFixed(1)}</span>
+            <span className="value-large">{(status.speed_mlh ?? 0).toFixed(1)}</span>
             <span className="value-unit">ml/h</span>
           </div>
         </div>
 
         {/* Volume */}
         <div className="param-row">
-          <span className="param-label">The tich</span>
+          <span className="param-label">Thể tích</span>
           <div className="flex items-baseline">
-            <span className="value-large">{status.volume_ml}</span>
+            <span className="value-large">{status.volume_ml ?? 0}</span>
             <span className="value-unit">ml</span>
           </div>
         </div>
@@ -100,9 +100,9 @@ export function ControlPanel({
         {/* Infused Volume with Progress */}
         <div className="param-row flex-col items-stretch gap-3">
           <div className="flex justify-between items-center">
-            <span className="param-label">Da truyen</span>
+            <span className="param-label">Đã truyền</span>
             <div className="flex items-baseline">
-              <span className="value-medium">{infusedVolume.toFixed(1)}</span>
+              <span className="value-medium">{(infusedVolume ?? 0).toFixed(1)}</span>
               <span className="value-unit">ml</span>
             </div>
           </div>

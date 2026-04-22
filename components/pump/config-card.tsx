@@ -17,17 +17,17 @@ interface ConfigCardProps {
 }
 
 export function ConfigCard({ status, onSaveConfig, disabled }: ConfigCardProps) {
-  const [syringeIndex, setSyringeIndex] = useState(status.syringe_index)
-  const [speed, setSpeed] = useState(status.speed_mlh.toString())
-  const [volume, setVolume] = useState(status.volume_ml.toString())
+  const [syringeIndex, setSyringeIndex] = useState(status.syringe_index ?? 0)
+  const [speed, setSpeed] = useState((status.speed_mlh ?? 0).toString())
+  const [volume, setVolume] = useState((status.volume_ml ?? 0).toString())
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Update local state when status changes
   useEffect(() => {
-    setSyringeIndex(status.syringe_index)
-    setSpeed(status.speed_mlh.toString())
-    setVolume(status.volume_ml.toString())
+    setSyringeIndex(status.syringe_index ?? 0)
+    setSpeed((status.speed_mlh ?? 0).toString())
+    setVolume((status.volume_ml ?? 0).toString())
   }, [status.syringe_index, status.speed_mlh, status.volume_ml])
 
   const handleSave = async () => {
@@ -158,12 +158,12 @@ export function ConfigCard({ status, onSaveConfig, disabled }: ConfigCardProps) 
           className="w-full"
         >
           <Save className="mr-2 h-4 w-4" />
-          {isSaving ? 'Dang luu...' : 'Luu cau hinh'}
+          {isSaving ? 'Đang lưu...' : 'Lưu cấu hình'}
         </Button>
 
         {isDisabled && status.pump_running && (
           <p className="text-xs text-muted-foreground text-center">
-            Khong the thay doi cau hinh khi bom dang chay
+            Không thể thay đổi cấu hình khi bơm đang chạy
           </p>
         )}
       </CardContent>

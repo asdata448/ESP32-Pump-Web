@@ -56,10 +56,10 @@ export function ConnectionSettings({
           <div>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Wifi className="h-5 w-5" />
-              Cai dat ket noi
+              Cài đặt kết nối
             </CardTitle>
             <CardDescription>
-              Cau hinh dia chi IP cua ESP32
+              Cấu hình địa chỉ IP của ESP32
             </CardDescription>
           </div>
           {isDemo ? (
@@ -68,11 +68,11 @@ export function ConnectionSettings({
             </Badge>
           ) : isConnected ? (
             <Badge className="bg-success text-success-foreground">
-              Da ket noi
+              Đã kết nối
             </Badge>
           ) : (
             <Badge variant="destructive">
-              Mat ket noi
+              Mất kết nối
             </Badge>
           )}
         </div>
@@ -106,7 +106,7 @@ export function ConnectionSettings({
             ) : (
               <RefreshCw className="mr-2 h-4 w-4" />
             )}
-            Kiem tra
+            Kiểm tra
           </Button>
 
           {isDemo ? (
@@ -120,7 +120,7 @@ export function ConnectionSettings({
               ) : (
                 <Wifi className="mr-2 h-4 w-4" />
               )}
-              Ket noi ESP32
+              Kết nối ESP32
             </Button>
           ) : (
             <Button
@@ -129,25 +129,25 @@ export function ConnectionSettings({
               onClick={onDisconnect}
             >
               <Unplug className="mr-2 h-4 w-4" />
-              Ngat ket noi
+              Ngắt kết nối
             </Button>
           )}
         </div>
 
         {testResult !== null && (
           <p className={`text-sm ${testResult ? 'text-success' : 'text-destructive'}`}>
-            {testResult 
-              ? 'Ket noi thanh cong! Thiet bi dang truc tuyen.'
-              : 'Khong the ket noi. Vui long kiem tra dia chi IP va dam bao ESP32 dang hoat dong.'}
+            {testResult
+              ? 'Kết nối thành công! Thiết bị đang trực tuyến.'
+              : 'Không thể kết nối. Vui lòng kiểm tra địa chỉ IP và đảm bảo ESP32 đang hoạt động.'}
           </p>
         )}
 
         <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-          <p className="font-medium mb-1">Huong dan:</p>
+          <p className="font-medium mb-1">Hướng dẫn:</p>
           <ul className="list-disc list-inside space-y-1 text-xs">
-            <li>Ket noi dien thoai/may tinh vao WiFi cua ESP32</li>
-            <li>Mac dinh IP la 192.168.4.1 khi o che do AP</li>
-            <li>Neu ESP32 ket noi vao WiFi nha, su dung IP duoc cap</li>
+            <li>Kết nối điện thoại/máy tính vào WiFi của ESP32</li>
+            <li>Mặc định IP là 192.168.4.1 khi ở chế độ AP</li>
+            <li>Nếu ESP32 kết nối vào WiFi nhà, sử dụng IP được cấp</li>
           </ul>
         </div>
       </CardContent>

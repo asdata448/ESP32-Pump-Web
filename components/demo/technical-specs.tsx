@@ -31,7 +31,7 @@ export function TechnicalSpecs() {
       >
         <div className="flex items-center gap-2">
           <Cpu className="h-4 w-4 text-primary" />
-          <span className="font-semibold text-sm">Thong so ky thuat mo phong</span>
+          <span className="font-semibold text-sm">Thông số kỹ thuật mô phỏng</span>
         </div>
         {isExpanded ? (
           <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -68,7 +68,7 @@ export function TechnicalSpecs() {
 
               {/* Motor Specs */}
               <div className="medical-panel-inner rounded-lg p-3">
-                <div className="text-xs font-semibold text-muted-foreground mb-2">DONG CO BUOC</div>
+                <div className="text-xs font-semibold text-muted-foreground mb-2">ĐỘNG CƠ BƯỚC</div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Steps/rev</span>
@@ -79,11 +79,11 @@ export function TechnicalSpecs() {
                     <span className="font-mono text-primary">1/{TECHNICAL_SPECS.motor.microstep}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Tong steps/rev</span>
+                    <span className="text-muted-foreground">Tổng steps/rev</span>
                     <span className="font-mono text-primary">{TECHNICAL_SPECS.motor.totalStepsPerRev}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Buoc vit me</span>
+                    <span className="text-muted-foreground">Bước vít me</span>
                     <span className="font-mono text-primary">{TECHNICAL_SPECS.leadScrew.pitchMm}mm</span>
                   </div>
                 </div>
@@ -91,7 +91,7 @@ export function TechnicalSpecs() {
 
               {/* Syringe Calibration */}
               <div className="medical-panel-inner rounded-lg p-3">
-                <div className="text-xs font-semibold text-muted-foreground mb-2">HIEU CHUAN ONG TIEM</div>
+                <div className="text-xs font-semibold text-muted-foreground mb-2">HIỆU CHUẨN ỐNG TIÊM</div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs p-2 bg-primary/5 rounded">
                     <span className="font-medium">10CC</span>
