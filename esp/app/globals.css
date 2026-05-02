@@ -1,0 +1,395 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ===== MÁY BƠM TIÊM ĐIỆN - THIẾT KẾ Y TẾ CHUYÊN NGHIỆP ===== */
+
+:root {
+  /* Nền tổng thể - gradient xanh navy đậm */
+  --background: #1a2a4a;
+  --background-dark: #0d1b35;
+  --foreground: #ffffff;
+  
+  /* Card panel */
+  --card: #1e3050;
+  --card-inner: #162840;
+  --card-foreground: #ffffff;
+  
+  /* Màu nhấn chính - cyan sáng cho số liệu */
+  --primary: #4dd9f0;
+  --primary-foreground: #0d1b35;
+  
+  /* Màu cảnh báo - vàng cam */
+  --warning: #f5a623;
+  --warning-foreground: #1a2a4a;
+  
+  /* Màu hành động - cam đậm cho nút chính */
+  --action: #f07020;
+  --action-foreground: #ffffff;
+  
+  /* Màu phụ - xanh slate */
+  --secondary: #2d4a6e;
+  --secondary-foreground: #ffffff;
+  
+  /* Màu trạng thái */
+  --success: #00cc66;
+  --error: #ff4444;
+  --info: #4dd9f0;
+  
+  /* Muted */
+  --muted: #3a5070;
+  --muted-foreground: rgba(255, 255, 255, 0.6);
+  
+  /* Border */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.12);
+  
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 8px;
+}
+
+@theme inline {
+  --font-sans: 'Be Vietnam Pro', 'Nunito', sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-border: var(--border);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply text-foreground antialiased;
+    background: linear-gradient(180deg, #1a2a4a 0%, #0d1b35 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    /* Texture nhẹ */
+    background-image: 
+      linear-gradient(180deg, #1a2a4a 0%, #0d1b35 100%),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  }
+}
+
+/* ===== CARD CHÍNH ===== */
+
+.medical-card {
+  background: #1e3050;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.medical-card-inner {
+  background: #162840;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+/* ===== GIÁ TRỊ SỐ LIỆU ===== */
+
+/* Số liệu lớn - tốc độ, thể tích */
+.value-large {
+  font-family: var(--font-sans);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/* Đơn vị đi kèm */
+.value-unit {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
+  margin-left: 0.25rem;
+}
+
+/* Nhãn tiêu đề */
+.param-label {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ===== NÚT HÀNH ĐỘNG ===== */
+
+/* Nút chính - cam đậm */
+.btn-primary {
+  background: var(--action);
+  color: white;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 12px rgba(240, 112, 32, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #ff8030;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(240, 112, 32, 0.4);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Nút phụ - xanh slate */
+.btn-secondary {
+  background: var(--secondary);
+  color: white;
+  font-weight: 500;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.15s ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #3a5a7e;
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== CẢNH BÁO ===== */
+
+.alert-warning {
+  background: rgba(245, 166, 35, 0.15);
+  border-left: 3px solid var(--warning);
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+}
+
+/* ===== THANH TIẾN TRÌNH ===== */
+
+.progress-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+  transition: width 0.5s ease-out;
+}
+
+/* ===== DROPDOWN ===== */
+
+.dropdown-trigger {
+  background: transparent;
+  border: 1px solid var(--muted);
+  border-radius: var(--radius-xs);
+  color: white;
+  transition: all 0.15s ease;
+}
+
+.dropdown-trigger:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ===== BADGE DEMO ===== */
+
+.badge-demo {
+  background: rgba(245, 166, 35, 0.2);
+  color: var(--warning);
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* ===== TRẠNG THÁI ===== */
+
+/* Chấm nhấp nháy khi đang chạy */
+.status-dot-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.6;
+    transform: scale(1.3);
+  }
+}
+
+/* ===== NHẬT KÝ SỰ KIỆN ===== */
+
+.event-log-item {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-xs);
+  transition: background 0.15s ease;
+}
+
+.event-log-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ===== MODAL ===== */
+
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: #1e3050;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  animation: modal-enter 0.2s ease-out;
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ===== HIỆU ỨNG CHUYỂN ĐỘNG ===== */
+
+/* Số liệu thay đổi */
+.value-transition {
+  transition: opacity 0.3s ease;
+}
+
+/* Thanh tiến trình */
+.progress-animate {
+  transition: width 0.5s ease-out;
+}
+
+/* Slide cảnh báo */
+.alert-slide-enter {
+  animation: slide-down 0.2s ease-out;
+}
+
+.alert-slide-exit {
+  animation: slide-up 0.2s ease-out;
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* ===== OVERLAY MẤT KẾT NỐI ===== */
+
+.disconnect-overlay {
+  background: rgba(13, 27, 53, 0.85);
+  backdrop-filter: blur(2px);
+}
+
+/* ===== GRID SỐ LIỆU 2x2 ===== */
+
+.data-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.data-grid-cell {
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.data-grid-cell:nth-child(2n) {
+  border-right: none;
+}
+
+.data-grid-cell:nth-child(n+3) {
+  border-bottom: none;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 600px) {
+  .value-large {
+    font-size: 2.2rem;
+  }
+  
+  .medical-card {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+}
+
+@media (min-width: 601px) {
+  .value-large {
+    font-size: 2.5rem;
+  }
+}
+
+/* ===== SCROLLBAR ===== */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #162840;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3a5070;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4a6080;
+}

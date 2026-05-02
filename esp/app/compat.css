@@ -1,0 +1,275 @@
+/* ===== COMPATIBILITY STYLES FOR ESP32 PUMP APP ===== */
+/* Ensures text visibility regardless of theme loading issues */
+
+/* Force dark theme colors */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background-color: #0d1b35 !important;
+  background-image: linear-gradient(180deg, #1a2a4a 0%, #0d1b35 100%) !important;
+  background-attachment: fixed !important;
+  color: #ffffff !important;
+  min-height: 100vh;
+}
+
+/* Ensure all text elements are visible */
+h1, h2, h3, h4, h5, h6,
+p, span, div, small,
+strong, em, b, i,
+ul, ol, li,
+table, th, td,
+button, a, label,
+input, textarea, select {
+  color: inherit !important;
+}
+
+/* Links */
+a {
+  color: #4dd9f0 !important;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #6de9ff !important;
+}
+
+/* Buttons */
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Inputs */
+input,
+textarea,
+select {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: inherit;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: #4dd9f0 !important;
+  box-shadow: 0 0 0 2px rgba(77, 217, 240, 0.2) !important;
+}
+
+/* Cards and panels */
+.card,
+.panel,
+.medical-card,
+.medical-panel {
+  background-color: #1e3050 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 16px;
+  color: #ffffff !important;
+}
+
+/* Headers */
+header {
+  background: linear-gradient(180deg, #1a2a4a 0%, #162840 100%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+/* Footer */
+footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Utility classes */
+.text-primary {
+  color: #4dd9f0 !important;
+}
+
+.text-success {
+  color: #00cc66 !important;
+}
+
+.text-warning {
+  color: #f5a623 !important;
+}
+
+.text-error,
+.text-danger {
+  color: #ff4444 !important;
+}
+
+.text-muted {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.bg-primary {
+  background-color: #4dd9f0 !important;
+}
+
+.bg-success {
+  background-color: #00cc66 !important;
+}
+
+.bg-warning {
+  background-color: #f5a623 !important;
+}
+
+.bg-error,
+.bg-danger {
+  background-color: #ff4444 !important;
+}
+
+.bg-muted {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Progress bars */
+.progress-track {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #4dd9f0, #6de9ff) !important;
+  border-radius: 3px;
+  transition: width 0.5s ease-out;
+  box-shadow: 0 0 10px rgba(77, 217, 240, 0.5);
+}
+
+/* Modals */
+.modal-overlay {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(6px);
+}
+
+.modal-content {
+  background-color: #1e3050 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  color: #ffffff !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #162840 !important;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #3a5070 !important;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #4a6080 !important;
+}
+
+/* Fix for any elements that might have white backgrounds */
+[style*="background: white"],
+[style*="background:#fff"],
+[style*="background:#ffffff"],
+[style*='background: white'],
+[style*='background:#fff'],
+[style*='background:#ffffff'] {
+  background-color: #1e3050 !important;
+  color: #ffffff !important;
+}
+
+/* Fix for any elements with white backgrounds in class names */
+.bg-white,
+.bg-slate-50,
+.bg-gray-50,
+.bg-zinc-50 {
+  background-color: #1e3050 !important;
+  color: #ffffff !important;
+}
+
+.text-black,
+.text-slate-900,
+.text-gray-900,
+.text-zinc-900 {
+  color: #ffffff !important;
+}
+
+/* Ensure visibility for shadcn/ui components */
+[data-radix-themes] {
+  --primary: #4dd9f0;
+  --primary-fg: #0d1b35;
+  --background: #0d1b35;
+  --foreground: #ffffff;
+  --card: #1e3050;
+  --card-foreground: #ffffff;
+  --popover: #1e3050;
+  --popover-foreground: #ffffff;
+  --secondary: #2d4a6e;
+  --secondary-foreground: #ffffff;
+  --muted: #3a5070;
+  --muted-foreground: rgba(255, 255, 255, 0.7);
+  --accent: #2d4a6e;
+  --accent-foreground: #ffffff;
+  --destructive: #ff4444;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #4dd9f0;
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}

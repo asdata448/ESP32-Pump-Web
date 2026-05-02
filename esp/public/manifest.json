@@ -1,0 +1,57 @@
+{
+  "name": "Máy Bơm Tiêm Điện ESP32",
+  "short_name": "ESP32 Pump",
+  "description": "Hệ thống giám sát và điều khiển máy bơm tiêm điện qua WiFi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1b35",
+  "theme_color": "#1a2a4a",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-light-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-dark-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["medical", "utilities"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Demo Mode",
+      "short_name": "Demo",
+      "description": "Chạy demo không cần phần cứng",
+      "url": "/demo",
+      "icons": [{"src": "/icon.svg", "sizes": "any"}]
+    },
+    {
+      "name": "Kết nối ESP32",
+      "short_name": "Kết nối",
+      "description": "Kết nối với máy bơm ESP32",
+      "url": "/",
+      "icons": [{"src": "/icon.svg", "sizes": "any"}]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

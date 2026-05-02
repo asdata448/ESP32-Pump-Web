@@ -1,0 +1,254 @@
+/* ===== ESP32 DEMO PAGE STYLES ===== */
+/* Đảm bảo hiển thị rõ ràng với font và màu sắc tốt nhất */
+
+/* Force dark theme for demo page */
+.demo-page {
+  background: linear-gradient(180deg, #1a2a4a 0%, #0d1b35 100%);
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+/* Header styling */
+.demo-header {
+  background: linear-gradient(180deg, #1a2a4a 0%, #162840 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.demo-header h1,
+.demo-header h2,
+.demo-header p,
+.demo-header span {
+  color: inherit;
+}
+
+/* Panel styling */
+.demo-panel {
+  background: #1e3050;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
+}
+
+.demo-panel-inner {
+  background: #162840;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  color: #ffffff;
+}
+
+/* Text visibility */
+.demo-text-primary {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.demo-text-secondary {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.demo-text-muted {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Value displays */
+.demo-value-large {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #4dd9f0;
+  text-shadow: 0 0 20px rgba(77, 217, 240, 0.3);
+}
+
+.demo-value-medium {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* Button styling */
+.demo-btn-primary {
+  background: #f07020;
+  color: #ffffff;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 24px;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 12px rgba(240, 112, 32, 0.3);
+}
+
+.demo-btn-primary:hover:not(:disabled) {
+  background: #ff8030;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(240, 112, 32, 0.4);
+}
+
+.demo-btn-secondary {
+  background: #2d4a6e;
+  color: #ffffff;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 10px 20px;
+  transition: all 0.15s ease;
+}
+
+.demo-btn-secondary:hover:not(:disabled) {
+  background: #3a5a7e;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Progress bar */
+.demo-progress-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.demo-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4dd9f0, #6de9ff);
+  border-radius: 3px;
+  transition: width 0.5s ease-out;
+  box-shadow: 0 0 10px rgba(77, 217, 240, 0.5);
+}
+
+/* Status badges */
+.demo-status-ready {
+  background: rgba(0, 204, 102, 0.2);
+  color: #00cc66;
+  border: 1px solid rgba(0, 204, 102, 0.4);
+}
+
+.demo-status-running {
+  background: rgba(77, 217, 240, 0.2);
+  color: #4dd9f0;
+  border: 1px solid rgba(77, 217, 240, 0.4);
+}
+
+.demo-status-paused {
+  background: rgba(245, 166, 35, 0.2);
+  color: #f5a623;
+  border: 1px solid rgba(245, 166, 35, 0.4);
+}
+
+.demo-status-error {
+  background: rgba(255, 68, 68, 0.2);
+  color: #ff4444;
+  border: 1px solid rgba(255, 68, 68, 0.4);
+}
+
+/* Input styling */
+.demo-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.demo-input:focus {
+  outline: none;
+  border-color: #4dd9f0;
+  box-shadow: 0 0 0 2px rgba(77, 217, 240, 0.2);
+}
+
+.demo-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Modal styling */
+.demo-modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+}
+
+.demo-modal-content {
+  background: #1e3050;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+}
+
+/* Utility classes for visibility */
+.demo-text-white {
+  color: #ffffff !important;
+}
+
+.demo-text-cyan {
+  color: #4dd9f0 !important;
+}
+
+.demo-text-green {
+  color: #00cc66 !important;
+}
+
+.demo-text-yellow {
+  color: #f5a623 !important;
+}
+
+.demo-text-red {
+  color: #ff4444 !important;
+}
+
+/* Grid layout */
+.demo-data-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.demo-data-cell {
+  background: rgba(30, 48, 80, 0.8);
+  padding: 16px;
+  color: #ffffff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .demo-value-large {
+    font-size: 2rem;
+  }
+
+  .demo-data-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Loading spinner */
+.demo-spinner {
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid #4dd9f0;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: demo-spin 1s linear infinite;
+}
+
+@keyframes demo-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Fade animations */
+@keyframes demo-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.demo-fade-in {
+  animation: demo-fade-in 0.3s ease-out;
+}
