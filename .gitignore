@@ -32,6 +32,9 @@ Thumbs.db
 .firebase/
 firebase-debug.log*
 firestore-debug.log*
+firebase-config.json
+firebase-config.js
+*.mcp.json
 
 # Claude Code
 .claude/
