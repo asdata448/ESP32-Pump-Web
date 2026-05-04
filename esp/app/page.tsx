@@ -555,7 +555,8 @@ export default function App() {
                     themLog('loi', 'Không thể lưu bản ghi. Kiểm tra Firebase config.')
                   }
                 }}
-                canSaveRecord={!!trangThaiESP32 && trangThaiESP32.volume_ml > 0}
+                // Cho phép lưu khi có dữ liệu pump (đã set volume và không trong state khởi động)
+                canSaveRecord={!!trangThaiESP32 && trangThaiESP32.volume_ml > 0 && trangThaiESP32.state !== 'BOOT' && trangThaiESP32.state !== 'SYRINGE'}
                 onDeleteSelected={firebase.deleteSelectedHistory}
                 onDeleteAll={firebase.deleteAllHistory}
               />
