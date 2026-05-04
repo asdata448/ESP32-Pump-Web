@@ -448,28 +448,20 @@ export async function testFirebaseConnection(): Promise<{
     const app = getFirebaseApp()
     const db = getFirestoreDB()
 
-    // Thử write một test document
-    const testRef = await addDoc(collection(db, 'pump_history'), {
-      deviceId: 'test-connection',
-      syringeType: '10CC',
-      speedMlh: 1,
-      volumeMl: 1,
-      infusedVolumeMl: 0,
-      totalTimeSec: 0,
-      status: 'COMPLETED',
-      timestamp: Timestamp.now(),
-      createdAt: Timestamp.now(),
-      testConnection: true,
-    })
+    // CHỈ TEST KẾT NỐI - không tạo document
+    // Thử query collection để test connection
+    const q = query(
+      collection(db, 'pump_history'),
+      limit(1)
+    )
 
-    // Xóa test document ngay sau khi tạo
-    // Note: Cần quyền delete trong security rules
-    console.log('[Firebase] Test connection successful, doc ID:', testRef.id)
+    await getDocs(q)
+    console.log('[Firebase] Connection test successful (no data written)')
 
     return {
       success: true,
       message: 'Kết nối Firebase thành công!',
-      details: { testDocId: testRef.id },
+      details: { timestamp: new Date().toISOString() },
     }
   } catch (error: any) {
     console.error('[Firebase] Connection test failed:', error)
