@@ -555,8 +555,16 @@ export default function App() {
                     themLog('loi', 'Không thể lưu bản ghi. Kiểm tra Firebase config.')
                   }
                 }}
-                // Cho phép lưu khi có dữ liệu pump (đã set volume và không trong state khởi động)
-                canSaveRecord={!!trangThaiESP32 && trangThaiESP32.volume_ml > 0 && trangThaiESP32.state !== 'BOOT' && trangThaiESP32.state !== 'SYRINGE'}
+                // Cho phép lưu khi:
+                // - Có trạng thái ESP32
+                // - Có thể tích hoặc đã từng bơm (steps_completed > 0)
+                // - Không trong state khởi động (BOOT/SYRINGE)
+                canSaveRecord={
+                  !!trangThaiESP32 &&
+                  trangThaiESP32.state !== 'BOOT' &&
+                  trangThaiESP32.state !== 'SYRINGE' &&
+                  (trangThaiESP32.volume_ml > 0 || trangThaiESP32.steps_completed > 0)
+                }
                 onDeleteSelected={firebase.deleteSelectedHistory}
                 onDeleteAll={firebase.deleteAllHistory}
               />
