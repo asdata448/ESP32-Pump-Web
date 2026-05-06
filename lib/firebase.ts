@@ -16,6 +16,12 @@ import {
   Firestore,
 } from 'firebase/firestore'
 import { getMessaging, getToken, Messaging, isSupported } from 'firebase/messaging'
+import {
+  getDatabase,
+  Database,
+  DatabaseReference,
+  ServerValue,
+} from 'firebase/database'
 
 // Firebase Configuration
 // Project: esp32-firebase-2026
@@ -28,11 +34,13 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'esp32-firebase-2026.firebasestorage.app',
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '173601455015',
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '1:173601455015:web:45c12915ffe835300cd482',
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL || 'https://esp32-firebase-2026-default-rtdb.firebaseio.com/',
 }
 
 // Initialize Firebase (singleton pattern)
 let app: FirebaseApp | null = null
 let db: Firestore | null = null
+let rtdb: Database | null = null
 
 export function getFirebaseApp(): FirebaseApp {
   if (!app) {
@@ -46,6 +54,13 @@ export function getFirestoreDB(): Firestore {
     db = getFirestore(getFirebaseApp())
   }
   return db
+}
+
+export function getDatabaseDB(): Database {
+  if (!rtdb) {
+    rtdb = getDatabase(getFirebaseApp())
+  }
+  return rtdb
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
