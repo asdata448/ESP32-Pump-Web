@@ -1,0 +1,33 @@
+{
+  "rules": {
+    ".read": true,
+    ".write": true,
+    "devices": {
+      "$deviceId": {
+        ".read": true,
+        ".write": true,
+        "info": {
+          ".read": true,
+          ".write": true
+        },
+        "status": {
+          ".read": true,
+          ".write": true
+        },
+        "config": {
+          ".read": true,
+          ".write": true
+        },
+        "commands": {
+          ".read": true,
+          ".write": true,
+          ".indexOn": ["createdAt", "status"]
+        },
+        "telemetry": {
+          ".read": true,
+          ".write": true
+        }
+      }
+    }
+  }
+}

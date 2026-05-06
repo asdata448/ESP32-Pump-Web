@@ -49,3 +49,24 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+# ============================================
+# PROJECT SPECIFIC
+# ============================================
+
+# Vercel
+vercel.json
+
+# Environment files (use Vercel Environment Variables)
+esp/.env.local
+esp/.env.*.local
+
+# Web app build files
+esp/node_modules
+esp/.next
+
+# ESP32 files in web app folder
+esp/*.ino
+esp/FIREBASE_*.md
+
+.vercel

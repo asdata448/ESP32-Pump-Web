@@ -1,0 +1,42 @@
+# ESP32 firmware files
+esp32-firmware/
+esp/*.ino
+esp/FIREBASE_*.md
+
+# Development files
+esp/github-push-commands.bat
+
+# Firebase config files (root level)
+firebase-config.js
+firebase.json
+firestore.rules
+firestore.indexes.json
+
+# MCP and Claude
+.mcp.json
+.claude/
+
+# Git
+.git
+
+# Dependencies
+esp/node_modules
+esp/.next
+
+# Environment files
+esp/.env.local
+esp/.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
