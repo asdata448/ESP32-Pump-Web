@@ -16,9 +16,12 @@ import {
   Activity,
   Trash2,
   RefreshCw,
+  Volume2,
+  VolumeX,
+  History,
 } from 'lucide-react'
 import { useESP32 } from '@/hooks/use-esp32-complete'
-import { TrangThaiESP32, MucNhatKy } from '@/lib/esp32-types'
+import { TrangThaiESP32, MucNhatKy, MucLichSu } from '@/lib/esp32-types'
 import { useFirebaseHistory } from '@/hooks/use-firebase-history'
 import { FirebaseHistoryPanel } from '@/components/firebase/firebase-history-panel'
 
@@ -32,6 +35,7 @@ export default function App() {
     cauHinhKetNoi,
     trangThaiESP32,
     nhatKySuKien,
+    lichSuBom,
     ketNoi,
     ngKetNoi,
     themLog,
@@ -43,6 +47,7 @@ export default function App() {
     dungBom,
     veHome,
     xacNhanBaoDong,
+    layLichSu,
     cheDoDemo,
   } = esp32
 
@@ -53,8 +58,11 @@ export default function App() {
   const [hienThiModalTheTich, setHienThiModalTheTich] = useState(false)
   const [hienThiModalOng, setHienThiModalOng] = useState(false)
   const [hienThiXacNhanDung, setHienThiXacNhanDung] = useState(false)
+  const [hienThiModalHoanTat, setHienThiModalHoanTat] = useState(false)
+  const [hienThiLichSuLocal, setHienThiLichSuLocal] = useState(false)
   const [thoiGianHienTai, setThoiGianHienTai] = useState('--:--')
   const [cheDoKetNoi, setCheDoKetNoi] = useState(false)
+  const [prevTrangThai, setPrevTrangThai] = useState<TrangThaiESP32 | null>(null)
 
   // ===== FIREBASE STATE =====
   const [hienThiLichSuFirebase, setHienThiLichSuFirebase] = useState(false)
@@ -105,6 +113,21 @@ export default function App() {
     const interval = setInterval(cap, 1000)
     return () => clearInterval(interval)
   }, [])
+
+  // ===== PHÁT HIỆN TRẠNG THÁI HOÀN TẤT =====
+  useEffect(() => {
+    if (trangThaiESP32 && trangThaiESP32.state === 'DONE' && prevTrangThai?.state !== 'DONE') {
+      setHienThiModalHoanTat(true)
+    }
+    setPrevTrangThai(trangThaiESP32)
+  }, [trangThaiESP32])
+
+  // ===== LẤY LỊCH SỬ LOCAL =====
+  useEffect(() => {
+    if (cauHinhKetNoi.daKetNoi) {
+      layLichSu()
+    }
+  }, [cauHinhKetNoi.daKetNoi, trangThaiESP32?.state])
 
   // ===== XỬ LÝ KẾT NỐI =====
   const xuLyKetNoi = async () => {
@@ -498,6 +521,65 @@ export default function App() {
             </div>
           </div>
 
+          {/* LỊCH SỬ LOCAL */}
+          <div className="medical-card-inner mx-4 mb-4 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <History className="w-4 h-4 text-white/40" />
+                <span className="text-xs text-white/60 uppercase tracking-wider font-medium">
+                  Lịch sử bơm (Local)
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => layLichSu()}
+                  className="text-xs text-white/60 hover:text-white transition"
+                >
+                  <RefreshCw className="w-3 h-3 inline" />
+                </button>
+                <button
+                  onClick={() => setHienThiLichSuLocal(!hienThiLichSuLocal)}
+                  className="text-xs text-[#4dd9f0] hover:text-[#4dd9f0]/80 transition"
+                >
+                  {hienThiLichSuLocal ? 'Ẩn' : 'Hiện'}
+                </button>
+              </div>
+            </div>
+
+            {hienThiLichSuLocal && (
+              <div className="space-y-2">
+                {lichSuBom.length === 0 ? (
+                  <div className="text-center py-8 text-white/40 text-sm">
+                    Chưa có lịch sử bơm
+                  </div>
+                ) : (
+                  lichSuBom.slice(0, 5).map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="event-log-item px-3 py-2 flex items-center justify-between"
+                    >
+                      <div className="flex-1">
+                        <div className="text-xs text-white font-medium">
+                          {item.syringe} • {item.speed_mlh} ml/h • {item.volume_ml} ml
+                        </div>
+                        <div className="text-xs text-white/50 mt-0.5">
+                          Thời gian: {Math.floor(item.total_sec / 60)}p {item.total_sec % 60}s
+                        </div>
+                      </div>
+                      <div className="text-xs text-white/40">
+                        {item.thoiGianGhi.toLocaleTimeString('vi-VN', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true,
+                        })}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
           {/* LỊCH SỬ FIREBASE */}
           <div className="medical-card-inner mx-4 mb-4 p-4">
             <div className="flex items-center justify-between mb-3">
@@ -636,12 +718,19 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
           <div className="modal-content w-full max-w-sm p-6">
             <h3 className="text-lg font-semibold text-white mb-4">
-              Dừng bơm và về trang chủ?
+              {trangThaiESP32?.pump_running ? 'Tạm dừng bơm?' : 'Về trang chủ?'}
             </h3>
+            <p className="text-sm text-white/70 mb-4">
+              {trangThaiESP32?.pump_running ? 'Bơm sẽ tạm dừng, bạn có thể tiếp tục sau.' : 'Máy bơm sẽ về vị trí ban đầu.'}
+            </p>
             <div className="flex gap-3">
               <button
                 onClick={() => {
-                  dungBom()
+                  if (trangThaiESP32?.pump_running) {
+                    tamDung()
+                  } else {
+                    veHome()
+                  }
                   setHienThiXacNhanDung(false)
                 }}
                 className="flex-1 btn-primary py-2"
@@ -653,6 +742,56 @@ export default function App() {
                 className="flex-1 btn-secondary py-2"
               >
                 Không
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL HOÀN TẤT */}
+      {hienThiModalHoanTat && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+          <div className="modal-content w-full max-w-sm p-6 text-center">
+            <div className="mb-4">
+              <div className="w-20 h-20 mx-auto rounded-full bg-[#00cc66]/20 flex items-center justify-center mb-4">
+                <Check className="w-10 h-10 text-[#00cc66]" />
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-2">
+              Hoàn tất!
+            </h3>
+            <p className="text-white/70 mb-6">
+              Lượng tiêm đã được truyền thành công
+            </p>
+            <div className="bg-white/5 rounded-lg p-4 mb-6">
+              <div className="text-sm text-white/60 mb-1">Đã truyền</div>
+              <div className="text-3xl font-bold text-[#4dd9f0]">
+                {mlDaTruyen.toFixed(1)} ml
+              </div>
+              <div className="text-xs text-white/40 mt-1">
+                / {trangThaiESP32?.volume_ml || 0} ml
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => {
+                  veHome()
+                  setHienThiModalHoanTat(false)
+                }}
+                className="btn-primary py-3 font-semibold"
+              >
+                <Home className="w-4 h-4 inline mr-2" />
+                Về HOME
+              </button>
+              <button
+                onClick={() => {
+                  xacNhanBaoDong()
+                  setHienThiModalHoanTat(false)
+                }}
+                className="btn-secondary py-3 font-semibold"
+              >
+                <VolumeX className="w-4 h-4 inline mr-2" />
+                Tắt âm
               </button>
             </div>
           </div>
