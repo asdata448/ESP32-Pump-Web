@@ -763,15 +763,34 @@ export default function App() {
             <p className="text-white/70 mb-6">
               Lượng tiêm đã được truyền thành công
             </p>
-            <div className="bg-white/5 rounded-lg p-4 mb-6">
-              <div className="text-sm text-white/60 mb-1">Đã truyền</div>
-              <div className="text-3xl font-bold text-[#4dd9f0]">
-                {mlDaTruyen.toFixed(1)} ml
+
+            {/* 3 THÔNG SỐ */}
+            <div className="space-y-3 mb-6">
+              {/* Thể tích đã truyền */}
+              <div className="bg-white/5 rounded-lg p-3">
+                <div className="text-sm text-white/60 mb-1">Đã truyền</div>
+                <div className="text-2xl font-bold text-[#4dd9f0]">
+                  {mlDaTruyen.toFixed(1)} ml
+                </div>
               </div>
-              <div className="text-xs text-white/40 mt-1">
-                / {trangThaiESP32?.volume_ml || 0} ml
+
+              {/* Tốc độ truyền */}
+              <div className="bg-white/5 rounded-lg p-3">
+                <div className="text-sm text-white/60 mb-1">Tốc độ truyền</div>
+                <div className="text-2xl font-bold text-white">
+                  {trangThaiESP32?.speed_mlh?.toFixed(1) || 0} ml/h
+                </div>
+              </div>
+
+              {/* Thể tích bơm */}
+              <div className="bg-white/5 rounded-lg p-3">
+                <div className="text-sm text-white/60 mb-1">Thể tích bơm</div>
+                <div className="text-2xl font-bold text-white">
+                  {trangThaiESP32?.volume_ml || 0} ml
+                </div>
               </div>
             </div>
+
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => {

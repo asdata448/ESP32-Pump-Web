@@ -8,6 +8,7 @@ export async function POST() {
 
   setMockState({
     paused: false,
+    fsr_alert: false,
   })
 
   return NextResponse.json({ status: 'ok' })
