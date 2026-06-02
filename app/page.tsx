@@ -68,6 +68,8 @@ export default function App() {
   const [hienThiLichSuFirebase, setHienThiLichSuFirebase] = useState(false)
   const [firebaseEnabled, setFirebaseEnabled] = useState(true)
   const [deviceId, setDeviceId] = useState<string>('')
+  const [dangLuuFirebase, setDangLuuFirebase] = useState(false)
+  const [loiLuuFirebase, setLoiLuuFirebase] = useState<string | null>(null)
 
   // Get device ID from localStorage on mount (client-side only)
   useEffect(() => {
@@ -143,6 +145,45 @@ export default function App() {
   const xuLyNgKetNoi = () => {
     ngKetNoi()
     setCheDoKetNoi(false)
+  }
+
+  // ===== LƯU VÀO FIREBASE =====
+  const luuVaoFirebase = async () => {
+    if (!trangThaiESP32) {
+      themLog('loi', 'Không có dữ liệu ESP32 để lưu!')
+      setLoiLuuFirebase('Không có dữ liệu ESP32')
+      return
+    }
+
+    setDangLuuFirebase(true)
+    setLoiLuuFirebase(null)
+
+    try {
+      const response = await fetch('/api/firebase-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deviceId: deviceId,
+          overrideData: trangThaiESP32,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.status === 'ok') {
+        themLog('thanh_cong', `Đã lưu vào Firebase: ${result.data.volume_ml}ml (${result.data.percentage}%)`)
+        setLoiLuuFirebase(null)
+      } else {
+        themLog('loi', 'Không thể lưu vào Firebase')
+        setLoiLuuFirebase('Lỗi lưu Firebase')
+      }
+    } catch (error) {
+      console.error('Error saving to Firebase:', error)
+      themLog('loi', 'Lỗi kết nối Firebase')
+      setLoiLuuFirebase('Lỗi kết nối')
+    } finally {
+      setDangLuuFirebase(false)
+    }
   }
 
   // ===== TRỢ GIÚP TÍNH TOÁN =====
@@ -480,6 +521,32 @@ export default function App() {
               <Bell className="w-4 h-4" />
               <span>Báo động</span>
             </button>
+          </div>
+
+          {/* NÚT LƯU VÀO FIREBASE */}
+          <div className="mx-4 mb-4">
+            <button
+              onClick={() => luuVaoFirebase()}
+              disabled={dangLuuFirebase || !cauHinhKetNoi.daKetNoi}
+              className="w-full btn-primary py-3 flex items-center justify-center gap-2 font-semibold"
+            >
+              {dangLuuFirebase ? (
+                <>
+                  <Activity className="w-4 h-4 animate-spin" />
+                  Đang lưu...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4" />
+                  Lưu vào Firebase
+                </>
+              )}
+            </button>
+            {loiLuuFirebase && (
+              <div className="mt-2 text-center text-xs text-red-400">
+                {loiLuuFirebase}
+              </div>
+            )}
           </div>
 
           {/* NHẬT KÝ */}
