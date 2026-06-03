@@ -625,3 +625,159 @@ export function createPumpHistoryRecord(data: {
   return cleanData
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// FIREBASE REALTIME DATABASE - ESP32 DEVICE CONTROL
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface ESP32DeviceStatus {
+  state: string
+  syringe: string
+  syringe_index: number
+  speed_mlh: number
+  volume_ml: number
+  remaining_sec: number
+  steps_completed: number
+  steps_total: number
+  homed: boolean
+  contact_found: boolean
+  fsr_alert: boolean
+  pump_running: boolean
+  paused: boolean
+  fsr_raw: number
+  fsr_presence_threshold: number
+  fsr_occlusion_threshold: number
+  limit_pressed: boolean
+  buzzer_on: boolean
+  ip: string
+  wifi_mode: string
+  timestamp?: number
+}
+
+export interface ESP32Command {
+  type: 'START' | 'STOP' | 'PAUSE' | 'RESUME' | 'CONFIG' | 'PREPARE' | 'REHOME' | 'RESET_ALARM'
+  params?: {
+    syringe_index?: number
+    speed_mlh?: number
+    volume_ml?: number
+  }
+  timestamp?: number
+}
+
+/**
+ * Gửi command đến ESP32 qua Firebase Realtime Database
+ * @param deviceId - Device ID (MAC address)
+ * @param command - Command object
+ */
+export async function sendESP32Command(
+  deviceId: string,
+  command: ESP32Command
+): Promise<boolean> {
+  try {
+    const rtdb = getDatabaseDB()
+    const commandRef = ref(rtdb, `devices/${deviceId}/commands/${command.type.toLowerCase()}`)
+
+    await set(commandRef, {
+      ...command.params,
+      timestamp: Date.now(),
+    })
+
+    console.log('[Firebase RTDB] Command sent:', command.type, 'to device:', deviceId)
+    return true
+  } catch (error) {
+    console.error('[Firebase RTDB] Error sending command:', error)
+    return false
+  }
+}
+
+/**
+ * Subscribe để nhận status updates từ ESP32
+ * @param deviceId - Device ID (MAC address)
+ * @param callback - Callback function nhận status updates
+ * @returns Unsubscribe function
+ */
+export function subscribeToESP32Status(
+  deviceId: string,
+  callback: (status: ESP32DeviceStatus | null) => void
+): () => void {
+  try {
+    const rtdb = getDatabaseDB()
+    const statusRef = ref(rtdb, `devices/${deviceId}/status`)
+
+    const unsubscribe = onValue(statusRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const status = snapshot.val() as ESP32DeviceStatus
+        callback(status)
+      } else {
+        callback(null)
+      }
+    }, (error) => {
+      console.error('[Firebase RTDB] Error listening to status:', error)
+      callback(null)
+    })
+
+    return () => unsubscribe()
+  } catch (error) {
+    console.error('[Firebase RTDB] Error subscribing to status:', error)
+    return () => {}
+  }
+}
+
+/**
+ * Auto-detect device ID từ Firebase Realtime Database
+ * Trả về device ID đầu tiên tìm thấy hoặc null
+ */
+export async function autoDetectDeviceId(): Promise<string | null> {
+  try {
+    const rtdb = getDatabaseDB()
+    const devicesRef = ref(rtdb, 'devices')
+
+    // Lấy danh sách devices một lần
+    const snapshot = await get(devicesRef)
+
+    if (snapshot && snapshot.exists()) {
+      const devices = snapshot.val()
+      const deviceIds = Object.keys(devices)
+
+      if (deviceIds.length > 0) {
+        // Trả về device ID đầu tiên
+        const deviceId = deviceIds[0]
+        console.log('[Firebase RTDB] Auto-detected device:', deviceId)
+        return deviceId
+      }
+    }
+
+    console.log('[Firebase RTDB] No devices found')
+    return null
+  } catch (error) {
+    console.error('[Firebase RTDB] Error auto-detecting device:', error)
+    return null
+  }
+}
+
+/**
+ * Lấy danh sách tất cả devices từ Firebase Realtime Database
+ */
+export async function getAllDevices(): Promise<string[]> {
+  try {
+    const rtdb = getDatabaseDB()
+    const devicesRef = ref(rtdb, 'devices')
+
+    const snapshot = await get(devicesRef)
+
+    if (snapshot && snapshot.exists()) {
+      return Object.keys(snapshot.val())
+    }
+
+    return []
+  } catch (error) {
+    console.error('[Firebase RTDB] Error getting devices:', error)
+    return []
+  }
+}
+
+// Helper function for Realtime Database get
+import { ref, onValue, get, set as rtdbSet } from 'firebase/database'
+function set(dbRef: DatabaseReference, value: any): Promise<void> {
+  return rtdbSet(dbRef, value)
+}
+

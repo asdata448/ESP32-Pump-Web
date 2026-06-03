@@ -11,6 +11,14 @@ import {
   TRANG_THAI_ESP32_MAC_DINH,
   LOAI_ONG_TIEM,
 } from '@/lib/esp32-types'
+import {
+  sendESP32Command,
+  subscribeToESP32Status,
+  autoDetectDeviceId,
+  getAllDevices,
+  type ESP32DeviceStatus,
+  type ESP32Command,
+} from '@/lib/firebase'
 
 /**
  * Fetch với timeout 5 giây dùng AbortController
@@ -47,12 +55,18 @@ export function useESP32(): TrangThaiUseESP32 {
   const [lichSuBom, setLichSuBom] = useState<MucLichSu[]>([])
   const [cheDoDemo, setCheDoDemo] = useState(false)
 
+  // ===== FIREBASE STATE =====
+  const [cheDoKetNoi, setCheDoKetNoi] = useState<'HTTP' | 'FIREBASE'>('FIREBASE')
+  const [deviceId, setDeviceId] = useState<string | null>(null)
+  const [dangKetNoiFirebase, setDangKetNoiFirebase] = useState(false)
+
   // ===== REFS =====
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const failedRequestsRef = useRef(0)
   const lastNhatKyIdRef = useRef(0)
   const visibilityCheckRef = useRef(true)
+  const firebaseUnsubscribeRef = useRef<(() => void) | null>(null)
 
   // ===== THÊM LOG =====
   const themLog = useCallback((loai: MucNhatKy['loai'], noiDung: string) => {
@@ -323,13 +337,261 @@ export function useESP32(): TrangThaiUseESP32 {
     }
   }, [cauHinhKetNoi])
 
+  // ===== FIREBASE FUNCTIONS =====
+
+  // Auto-detect device ID from Firebase
+  const tuongThichDeviceId = useCallback(async () => {
+    setDangKetNoiFirebase(true)
+    themLog('thong_tin', 'Đang tìm kiếm device...')
+
+    try {
+      const detectedId = await autoDetectDeviceId()
+      if (detectedId) {
+        setDeviceId(detectedId)
+        localStorage.setItem('esp32_device_id', detectedId)
+        themLog('thanh_cong', `Tìm thấy device: ${detectedId}`)
+        return detectedId
+      } else {
+        themLog('canh_bao', 'Không tìm thấy device nào')
+        return null
+      }
+    } catch (err) {
+      themLog('loi', 'Lỗi tìm device: ' + (err as Error).message)
+      return null
+    } finally {
+      setDangKetNoiFirebase(false)
+    }
+  }, [themLog])
+
+  // Connect to Firebase device
+  const ketNoiFirebase = useCallback(async (id?: string) => {
+    const targetDeviceId = id || deviceId
+
+    if (!targetDeviceId) {
+      const detected = await tuongThichDeviceId()
+      if (!detected) {
+        setCauHinhKetNoi((prev) => ({
+          ...prev,
+          daKetNoi: false,
+          loiKetNoi: 'Không tìm thấy device',
+        }))
+        return
+      }
+      setDeviceId(detected)
+    }
+
+    setCheDoKetNoi('FIREBASE')
+    setCauHinhKetNoi((prev) => ({
+      ...prev,
+      daKetNoi: true,
+      dangKetNoi: false,
+      loiKetNoi: null,
+    }))
+
+    themLog('thong_tin', 'Đã kết nối Firebase')
+  }, [deviceId, tuongThichDeviceId, themLog])
+
+  // Subscribe to Firebase status updates
+  useEffect(() => {
+    if (cheDoKetNoi !== 'FIREBASE' || !deviceId) {
+      return
+    }
+
+    themLog('thong_tin', `Đang theo dõi status từ device: ${deviceId}`)
+
+    firebaseUnsubscribeRef.current = subscribeToESP32Status(
+      deviceId,
+      (status) => {
+        if (status) {
+          // Convert ESP32DeviceStatus to TrangThaiESP32
+          setTrangThaiESP32({
+            state: status.state as TrangThaiESP32['state'],
+            syringe: status.syringe,
+            syringe_index: status.syringe_index,
+            speed_mlh: status.speed_mlh,
+            volume_ml: status.volume_ml,
+            remaining_sec: status.remaining_sec,
+            steps_completed: status.steps_completed,
+            steps_total: status.steps_total,
+            homed: status.homed,
+            contact_found: status.contact_found,
+            fsr_alert: status.fsr_alert,
+            pump_running: status.pump_running,
+            paused: status.paused,
+            fsr_raw: status.fsr_raw,
+            fsr_presence_threshold: status.fsr_presence_threshold,
+            fsr_occlusion_threshold: status.fsr_occlusion_threshold,
+            limit_pressed: status.limit_pressed,
+            buzzer_on: status.buzzer_on,
+            ip: status.ip,
+            wifi_mode: status.wifi_mode,
+          })
+          setCauHinhKetNoi((prev) => ({
+            ...prev,
+            daKetNoi: true,
+            loiKetNoi: null,
+          }))
+        } else {
+          setCauHinhKetNoi((prev) => ({
+            ...prev,
+            daKetNoi: false,
+            loiKetNoi: 'Không nhận được status',
+          }))
+        }
+      }
+    )
+
+    return () => {
+      if (firebaseUnsubscribeRef.current) {
+        firebaseUnsubscribeRef.current()
+        firebaseUnsubscribeRef.current = null
+      }
+    }
+  }, [cheDoKetNoi, deviceId])
+
+  // Firebase command functions
+  const guiLenhFirebase = useCallback(async (
+    command: ESP32Command
+  ): Promise<boolean> => {
+    if (!deviceId) {
+      themLog('loi', 'Chưa có device ID')
+      return false
+    }
+
+    if (cheDoKetNoi !== 'FIREBASE') {
+      themLog('loi', 'Chưa ở chế độ Firebase')
+      return false
+    }
+
+    const success = await sendESP32Command(deviceId, command)
+    if (success) {
+      themLog('thong_tin', `Đã gửi lệnh: ${command.type}`)
+    } else {
+      themLog('loi', `Lỗi gửi lệnh: ${command.type}`)
+    }
+    return success
+  }, [deviceId, cheDoKetNoi, themLog])
+
+  // Override command functions to use Firebase when in Firebase mode
+  const capNhatCauHinhFirebase = useCallback(async (
+    index: number,
+    speed: number,
+    volume: number
+  ) => {
+    return await guiLenhFirebase({
+      type: 'CONFIG',
+      params: { syringe_index: index, speed_mlh: speed, volume_ml: volume }
+    })
+  }, [guiLenhFirebase])
+
+  const chuanBiFirebase = useCallback(async () => {
+    return await guiLenhFirebase({ type: 'PREPARE' })
+  }, [guiLenhFirebase])
+
+  const batDauBomFirebase = useCallback(async () => {
+    return await guiLenhFirebase({ type: 'START' })
+  }, [guiLenhFirebase])
+
+  const tamDungFirebase = useCallback(async () => {
+    return await guiLenhFirebase({ type: 'PAUSE' })
+  }, [guiLenhFirebase])
+
+  const tiepTucFirebase = useCallback(async () => {
+    return await guiLenhFirebase({ type: 'RESUME' })
+  }, [guiLenhFirebase])
+
+  const dungBomFirebase = useCallback(async () => {
+    return await guiLenhFirebase({ type: 'STOP' })
+  }, [guiLenhFirebase])
+
+  const veHomeFirebase = useCallback(async () => {
+    return await guiLenhFirebase({ type: 'REHOME' })
+  }, [guiLenhFirebase])
+
+  const xacNhanBaoDongFirebase = useCallback(async () => {
+    return await guiLenhFirebase({ type: 'RESET_ALARM' })
+  }, [guiLenhFirebase])
+
+  // Wrapper functions that route to HTTP or Firebase based on mode
+  const capNhatCauHinhWrapper = useCallback(async (index: number, speed: number, volume: number) => {
+    if (cheDoKetNoi === 'FIREBASE') {
+      return await capNhatCauHinhFirebase(index, speed, volume)
+    }
+    return await capNhatCauHinh(index, speed, volume)
+  }, [cheDoKetNoi, capNhatCauHinhFirebase, capNhatCauHinh])
+
+  const chuanBiWrapper = useCallback(async () => {
+    if (cheDoKetNoi === 'FIREBASE') {
+      return await chuanBiFirebase()
+    }
+    return await chuanBi()
+  }, [cheDoKetNoi, chuanBiFirebase, chuanBi])
+
+  const batDauBomWrapper = useCallback(async () => {
+    if (cheDoKetNoi === 'FIREBASE') {
+      return await batDauBomFirebase()
+    }
+    return await batDauBom()
+  }, [cheDoKetNoi, batDauBomFirebase, batDauBom])
+
+  const tamDungWrapper = useCallback(async () => {
+    if (cheDoKetNoi === 'FIREBASE') {
+      return await tamDungFirebase()
+    }
+    return await tamDung()
+  }, [cheDoKetNoi, tamDungFirebase, tamDung])
+
+  const tiepTucWrapper = useCallback(async () => {
+    if (cheDoKetNoi === 'FIREBASE') {
+      return await tiepTucFirebase()
+    }
+    return await tiepTuc()
+  }, [cheDoKetNoi, tiepTucFirebase, tiepTuc])
+
+  const dungBomWrapper = useCallback(async () => {
+    if (cheDoKetNoi === 'FIREBASE') {
+      return await dungBomFirebase()
+    }
+    return await dungBom()
+  }, [cheDoKetNoi, dungBomFirebase, dungBom])
+
+  const veHomeWrapper = useCallback(async () => {
+    if (cheDoKetNoi === 'FIREBASE') {
+      return await veHomeFirebase()
+    }
+    return await veHome()
+  }, [cheDoKetNoi, veHomeFirebase, veHome])
+
+  const xacNhanBaoDongWrapper = useCallback(async () => {
+    if (cheDoKetNoi === 'FIREBASE') {
+      return await xacNhanBaoDongFirebase()
+    }
+    return await xacNhanBaoDong()
+  }, [cheDoKetNoi, xacNhanBaoDongFirebase, xacNhanBaoDong])
+
   // ===== LOAD TỪ LOCALSTORAGE =====
   useEffect(() => {
-    const saved = localStorage.getItem('esp32_base_url')
-    if (saved) {
-      ketNoi(saved.replace('http://', ''))
+    // Load device ID from localStorage
+    const savedDeviceId = localStorage.getItem('esp32_device_id')
+    if (savedDeviceId) {
+      setDeviceId(savedDeviceId)
     }
-  }, [ketNoi])
+
+    // Load connection mode from localStorage
+    const savedMode = localStorage.getItem('esp32_connection_mode')
+    if (savedMode === 'HTTP' || savedMode === 'FIREBASE') {
+      setCheDoKetNoi(savedMode)
+    }
+
+    // Load HTTP base URL from localStorage (for HTTP mode)
+    const savedBaseUrl = localStorage.getItem('esp32_base_url')
+    if (savedBaseUrl && savedMode === 'HTTP') {
+      ketNoi(savedBaseUrl.replace('http://', ''))
+    } else if (savedDeviceId && savedMode === 'FIREBASE') {
+      // Auto-connect to Firebase if device ID exists
+      ketNoiFirebase(savedDeviceId)
+    }
+  }, [ketNoi, ketNoiFirebase])
 
   // ===== RETURN =====
   return {
@@ -340,15 +602,21 @@ export function useESP32(): TrangThaiUseESP32 {
     cheDoDemo,
     ketNoi,
     ngKetNoi,
-    capNhatCauHinh,
-    chuanBi,
-    batDauBom,
-    tamDung,
-    tiepTuc,
-    dungBom,
-    veHome,
-    xacNhanBaoDong,
+    capNhatCauHinh: capNhatCauHinhWrapper,
+    chuanBi: chuanBiWrapper,
+    batDauBom: batDauBomWrapper,
+    tamDung: tamDungWrapper,
+    tiepTuc: tiepTucWrapper,
+    dungBom: dungBomWrapper,
+    veHome: veHomeWrapper,
+    xacNhanBaoDong: xacNhanBaoDongWrapper,
     layLichSu,
     themLog,
+    // Firebase state and functions
+    cheDoKetNoi,
+    deviceId,
+    dangKetNoiFirebase,
+    ketNoiFirebase,
+    tuongThichDeviceId,
   }
 }

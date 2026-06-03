@@ -84,19 +84,19 @@ export interface MucLichSu {
 export interface TrangThaiUseESP32 {
   // Kết nối
   cauHinhKetNoi: CauHinhKetNoi
-  
+
   // Trạng thái ESP32
   trangThaiESP32: TrangThaiESP32 | null
-  
+
   // Nhật ký sự kiện
   nhatKySuKien: MucNhatKy[]
-  
+
   // Lịch sử bơm
   lichSuBom: MucLichSu[]
-  
+
   // Chế độ
   cheDoDemo: boolean
-  
+
   // Các hàm
   ketNoi: (ip: string) => Promise<void>
   ngKetNoi: () => void
@@ -110,6 +110,13 @@ export interface TrangThaiUseESP32 {
   xacNhanBaoDong: () => Promise<void>
   layLichSu: () => Promise<void>
   themLog: (loai: MucNhatKy['loai'], noiDung: string) => void
+
+  // Firebase state và hàm
+  cheDoKetNoi: 'HTTP' | 'FIREBASE'
+  deviceId: string | null
+  dangKetNoiFirebase: boolean
+  ketNoiFirebase: (id?: string) => Promise<void>
+  tuongThichDeviceId: () => Promise<string | null>
 }
 
 /**

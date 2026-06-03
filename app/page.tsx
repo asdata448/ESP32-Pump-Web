@@ -19,6 +19,7 @@ import {
   Volume2,
   VolumeX,
   History,
+  Cloud,
 } from 'lucide-react'
 import { useESP32 } from '@/hooks/use-esp32-complete'
 import { TrangThaiESP32, MucNhatKy, MucLichSu } from '@/lib/esp32-types'
@@ -49,11 +50,18 @@ export default function App() {
     xacNhanBaoDong,
     layLichSu,
     cheDoDemo,
+    // Firebase
+    cheDoKetNoi: cheDoKetNoiFirebase,
+    deviceId: deviceIdFromHook,
+    dangKetNoiFirebase,
+    ketNoiFirebase,
+    tuongThichDeviceId,
   } = esp32
 
   // ===== STATE UI =====
   const [diaChi, setDiaChi] = useState('192.168.4.1')
   const [loi, setLoi] = useState<string | null>(null)
+  const [connectionMode, setConnectionMode] = useState<'FIREBASE' | 'HTTP'>('FIREBASE')
   const [hienThiModalTocDo, setHienThiModalTocDo] = useState(false)
   const [hienThiModalTheTich, setHienThiModalTheTich] = useState(false)
   const [hienThiModalOng, setHienThiModalOng] = useState(false)
@@ -216,35 +224,148 @@ export default function App() {
                 Kết nối ESP32
               </h1>
               <p className="text-sm text-white/60">
-                Đảm bảo điện thoại đã kết nối WiFi ESP32-PUMP
+                Chọn chế độ kết nối của bạn
               </p>
             </div>
 
-            {/* HƯỚNG DẪN */}
-            <details open className="mb-6">
-              <summary className="cursor-pointer text-white font-semibold mb-3 flex items-center gap-2">
-                <ChevronRight className="w-4 h-4" />
-                Hướng dẫn kết nối
-              </summary>
-              <ol className="text-sm text-white/70 space-y-2 ml-6 list-decimal">
-                <li>Vào Cài đặt WiFi trên điện thoại</li>
-                <li>Chọn mạng "ESP32-PUMP"</li>
-                <li>Nhập mật khẩu: 12345678</li>
-                <li>Quay lại ứng dụng này</li>
-              </ol>
-            </details>
-
-            {/* FORM INPUT */}
-            <div className="mb-4">
-              <label className="param-label block mb-2">Địa chỉ IP ESP32</label>
-              <input
-                type="text"
-                value={diaChi}
-                onChange={(e) => setDiaChi(e.target.value)}
-                placeholder="192.168.4.1"
-                className="w-full px-4 py-3 rounded-lg bg-[#162840] border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-[#4dd9f0]"
-              />
+            {/* CHỌN CHẾ ĐỘ KẾT NỐI */}
+            <div className="mb-6">
+              <label className="param-label block mb-3">Chế độ kết nối</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => {
+                    setConnectionMode('FIREBASE')
+                    setLoi(null)
+                  }}
+                  className={`p-4 rounded-lg border-2 transition ${
+                    connectionMode === 'FIREBASE'
+                      ? 'border-[#4dd9f0] bg-[#4dd9f0]/10'
+                      : 'border-white/20 bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  <div className="text-center">
+                    <Cloud className="w-6 h-6 mx-auto mb-2 text-[#4dd9f0]" />
+                    <div className="text-white font-semibold text-sm mb-1">Firebase Cloud</div>
+                    <div className="text-white/50 text-xs">Kết nối từ bất kỳ đâu</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    setConnectionMode('HTTP')
+                    setLoi(null)
+                  }}
+                  className={`p-4 rounded-lg border-2 transition ${
+                    connectionMode === 'HTTP'
+                      ? 'border-[#4dd9f0] bg-[#4dd9f0]/10'
+                      : 'border-white/20 bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  <div className="text-center">
+                    <Wifi className="w-6 h-6 mx-auto mb-2 text-[#4dd9f0]" />
+                    <div className="text-white font-semibold text-sm mb-1">WiFi Direct</div>
+                    <div className="text-white/50 text-xs">Cùng mạng với ESP32</div>
+                  </div>
+                </button>
+              </div>
             </div>
+
+            {/* FIREBASE MODE */}
+            {connectionMode === 'FIREBASE' ? (
+              <>
+                {/* DEVICE INFO */}
+                {deviceIdFromHook ? (
+                  <div className="mb-4 p-4 rounded-lg bg-[#162840] border border-[#4dd9f0]/30">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Check className="w-4 h-4 text-[#00cc66]" />
+                      <span className="text-sm font-semibold text-white">Device ID</span>
+                    </div>
+                    <div className="text-xs text-white/70 font-mono break-all">
+                      {deviceIdFromHook}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-4 p-4 rounded-lg bg-yellow-500/15 border border-yellow-500/30">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0" />
+                      <span className="text-sm text-yellow-300">
+                        Đang tìm kiếm device... Hãy đảm bảo ESP32 đang kết nối WiFi
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* NÚT KẾT NỐI FIREBASE */}
+                <button
+                  onClick={async () => {
+                    setLoi(null)
+                    if (!deviceIdFromHook) {
+                      const detected = await tuongThichDeviceId()
+                      if (!detected) {
+                        setLoi('Không tìm thấy device. Hãy đảm bảo ESP32 đang kết nối WiFi')
+                        return
+                      }
+                    }
+                    await ketNoiFirebase()
+                    setCheDoKetNoi(true)
+                  }}
+                  disabled={dangKetNoiFirebase}
+                  className="w-full btn-primary py-3 mb-3 font-semibold"
+                >
+                  {dangKetNoiFirebase ? (
+                    <>
+                      <Activity className="inline w-4 h-4 mr-2 animate-spin" />
+                      Đang kết nối Firebase...
+                    </>
+                  ) : (
+                    'KẾT NỐI FIREBASE'
+                  )}
+                </button>
+              </>
+            ) : (
+              <>
+                {/* HƯỚNG DẪN HTTP */}
+                <details open className="mb-6">
+                  <summary className="cursor-pointer text-white font-semibold mb-3 flex items-center gap-2">
+                    <ChevronRight className="w-4 h-4" />
+                    Hướng dẫn kết nối WiFi
+                  </summary>
+                  <ol className="text-sm text-white/70 space-y-2 ml-6 list-decimal">
+                    <li>Vào Cài đặt WiFi trên điện thoại</li>
+                    <li>Chọn mạng "ESP32-PUMP"</li>
+                    <li>Nhập mật khẩu: 12345678</li>
+                    <li>Quay lại ứng dụng này</li>
+                  </ol>
+                </details>
+
+                {/* FORM INPUT */}
+                <div className="mb-4">
+                  <label className="param-label block mb-2">Địa chỉ IP ESP32</label>
+                  <input
+                    type="text"
+                    value={diaChi}
+                    onChange={(e) => setDiaChi(e.target.value)}
+                    placeholder="192.168.4.1"
+                    className="w-full px-4 py-3 rounded-lg bg-[#162840] border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-[#4dd9f0]"
+                  />
+                </div>
+
+                {/* NÚT KẾT NỐI HTTP */}
+                <button
+                  onClick={xuLyKetNoi}
+                  disabled={cauHinhKetNoi.dangKetNoi}
+                  className="w-full btn-primary py-3 mb-3 font-semibold"
+                >
+                  {cauHinhKetNoi.dangKetNoi ? (
+                    <>
+                      <Activity className="inline w-4 h-4 mr-2 animate-spin" />
+                      Đang kết nối...
+                    </>
+                  ) : (
+                    'KẾT NỐI WIFI'
+                  )}
+                </button>
+              </>
+            )}
 
             {/* HIỂN THỊ LỖI */}
             {loi && (
@@ -253,22 +374,6 @@ export default function App() {
                 <span className="text-sm text-red-300">{loi}</span>
               </div>
             )}
-
-            {/* NÚT KẾT NỐI */}
-            <button
-              onClick={xuLyKetNoi}
-              disabled={cauHinhKetNoi.dangKetNoi}
-              className="w-full btn-primary py-3 mb-3 font-semibold"
-            >
-              {cauHinhKetNoi.dangKetNoi ? (
-                <>
-                  <Activity className="inline w-4 h-4 mr-2 animate-spin" />
-                  Đang kết nối...
-                </>
-              ) : (
-                'KẾT NỐI'
-              )}
-            </button>
 
             {/* NÚT DEMO */}
             <button
@@ -303,6 +408,19 @@ export default function App() {
               <h1 className="text-2xl font-bold text-[#4dd9f0]">
                 {getTrangThaiText(trangThaiESP32)}
               </h1>
+              {/* Connection Mode Badge */}
+              {cheDoKetNoiFirebase === 'FIREBASE' && deviceIdFromHook && (
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-[#4dd9f0]/10 border border-[#4dd9f0]/30">
+                  <Cloud className="w-3 h-3 text-[#4dd9f0]" />
+                  <span className="text-xs font-semibold text-[#4dd9f0]">Firebase Cloud</span>
+                </div>
+              )}
+              {cheDoKetNoiFirebase === 'HTTP' && (
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-[#00cc66]/10 border border-[#00cc66]/30">
+                  <Wifi className="w-3 h-3 text-[#00cc66]" />
+                  <span className="text-xs font-semibold text-[#00cc66]">WiFi Direct</span>
+                </div>
+              )}
             </div>
             {cheDoKetNoi && (
               <button
