@@ -72,6 +72,14 @@ export default function App() {
   const [cheDoKetNoi, setCheDoKetNoi] = useState(false)
   const [prevTrangThai, setPrevTrangThai] = useState<TrangThaiESP32 | null>(null)
 
+  // THÊM: Popup xác nhận & Màn hình chỉnh sửa
+  const [hienThiPopupXacNhan, setHienThiPopupXacNhan] = useState(false)
+  const [hienThiManHinhChinhSua, setHienThiManHinhChinhSua] = useState(false)
+  const [chinhSuaSyringe, setChinhSuaSyringe] = useState(0)
+  const [chinhSuaSpeed, setChinhSuaSpeed] = useState(60)
+  const [chinhSuaVolume, setChinhSuaVolume] = useState(5)
+  const [prevContactFound, setPrevContactFound] = useState(false)
+
   // ===== FIREBASE STATE =====
   const [hienThiLichSuFirebase, setHienThiLichSuFirebase] = useState(false)
   const [firebaseEnabled, setFirebaseEnabled] = useState(true)
@@ -132,12 +140,29 @@ export default function App() {
     setPrevTrangThai(trangThaiESP32)
   }, [trangThaiESP32])
 
+  // ===== THÊM: PHÁT HIỆN CONTACT_FOUND - HIỆN POPUP XÁC NHẬN =====
+  useEffect(() => {
+    if (trangThaiESP32?.contact_found && !prevContactFound) {
+      setHienThiPopupXacNhan(true)
+    }
+    setPrevContactFound(trangThaiESP32?.contact_found || false)
+  }, [trangThaiESP32?.contact_found])
+
   // ===== LẤY LỊCH SỬ LOCAL =====
   useEffect(() => {
     if (cauHinhKetNoi.daKetNoi) {
       layLichSu()
     }
   }, [cauHinhKetNoi.daKetNoi, trangThaiESP32?.state])
+
+  // ===== THÊM: COPY GIÁ TRỊ KHI MỞ MÀN HÌNH CHỈNH SỬA =====
+  useEffect(() => {
+    if (hienThiManHinhChinhSua && trangThaiESP32) {
+      setChinhSuaSyringe(trangThaiESP32.syringe_index || 0)
+      setChinhSuaSpeed(trangThaiESP32.speed_mlh || 60)
+      setChinhSuaVolume(trangThaiESP32.volume_ml || 5)
+    }
+  }, [hienThiManHinhChinhSua, trangThaiESP32])
 
   // ===== XỬ LÝ KẾT NỐI =====
   const xuLyKetNoi = async () => {
@@ -1003,6 +1028,354 @@ export default function App() {
       )}
     </div>
   )
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // POPUP XÁC NHẬN - Sau khi nhận diện pittong
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (hienThiPopupXacNhan) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+        <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-2xl border-4 border-black">
+          {/* Header */}
+          <h2 className="text-xl font-bold text-center mb-6 text-black border-b-2 border-black pb-3">
+            XÁC NHẬN CÀI ĐẶT & BẮT ĐẦU BƠM
+          </h2>
+
+          {/* Fields - chỉ hiển thị, không chỉnh */}
+          <div className="space-y-3 mb-6">
+            <div className="flex justify-between">
+              <span className="font-semibold text-black">Loại ống:</span>
+              <span className="text-black">{trangThaiESP32?.syringe || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold text-black">Tốc độ:</span>
+              <span className="text-black">{trangThaiESP32?.speed_mlh?.toFixed(1) || '0'} ml/h</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold text-black">Thể tích:</span>
+              <span className="text-black">{trangThaiESP32?.volume_ml || '0'} ml</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold text-black">Thời gian:</span>
+              <span className="text-black">{tinhThoiGian(trangThaiESP32)} phút</span>
+            </div>
+          </div>
+
+          {/* 2 nút */}
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setHienThiPopupXacNhan(false)
+                batDauBom()
+              }}
+              className="flex-1 py-3 bg-cyan-400 text-black font-bold rounded hover:bg-cyan-500"
+            >
+              Bắt đầu
+            </button>
+            <button
+              onClick={() => {
+                setHienThiPopupXacNhan(false)
+                setHienThiManHinhChinhSua(true)
+              }}
+              className="flex-1 py-3 bg-gray-300 text-black font-bold rounded hover:bg-gray-400"
+            >
+              SỬA CÀI ĐẶT
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MÀN HÌNH CHỈNH SỬA CÀI ĐẶT
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (hienThiManHinhChinhSua) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-b from-[#1a2a4a] to-[#0d1b35] p-4 z-40 overflow-y-auto">
+        <div className="max-w-[680px] mx-auto pb-20">
+          {/* Giữ nguyên design card hiện tại */}
+          <div className="medical-card">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+              <h1 className="text-2xl font-bold text-[#4dd9f0]">
+                CHỈNH SỬA CÀI ĐẶT
+              </h1>
+              <button
+                onClick={() => setHienThiManHinhChinhSua(false)}
+                className="px-4 py-2 rounded bg-red-500/20 text-red-300 font-semibold"
+              >
+                ✕ Đóng
+              </button>
+            </div>
+
+            {/* Giới hạn tốc độ - THÊM MỚI */}
+            <div className="mx-6 my-4 p-4 rounded-lg bg-white/5 border border-white/10">
+              <div className="text-white/70 text-sm mb-2">Giới hạn tốc độ:</div>
+              <div className="text-white text-sm">
+                • Ống 10cc: max 300ml/h
+                <br/>
+                • Ống 20cc: max 600ml/h
+              </div>
+            </div>
+
+            {/* Syringe selector */}
+            <div className="px-6 py-3 border-b border-white/10">
+              <button
+                onClick={() => setHienThiModalOng(true)}
+                className="w-full flex items-center justify-between px-4 py-2.5 dropdown-trigger"
+              >
+                <span className="text-white/70">Loại ống</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-white font-medium">
+                    {chinhSuaSyringe === 0 ? 'Vinahankook 10CC' : 'Vinahankook 20CC'}
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-white/50" />
+                </div>
+              </button>
+            </div>
+
+            {/* Data grid */}
+            <div className="medical-card-inner mx-4 my-4">
+              <div className="data-grid">
+                <button
+                  onClick={() => setHienThiModalTocDo(true)}
+                  className="data-grid-cell p-4"
+                >
+                  <div className="text-white/70 text-sm mb-1">Tốc độ</div>
+                  <div className="text-2xl font-bold text-white">
+                    {chinhSuaSpeed.toFixed(1)}
+                  </div>
+                  <div className="text-white/50 text-xs">ml/h</div>
+                </button>
+
+                <button
+                  onClick={() => setHienThiModalTheTich(true)}
+                  className="data-grid-cell p-4"
+                >
+                  <div className="text-white/70 text-sm mb-1">Thể tích</div>
+                  <div className="text-2xl font-bold text-white">
+                    {chinhSuaVolume}
+                  </div>
+                  <div className="text-white/50 text-xs">ml</div>
+                </button>
+              </div>
+            </div>
+
+            {/* 2 nút Lưu/HỶ */}
+            <div className="px-6 py-4 flex gap-3">
+              <button
+                onClick={async () => {
+                  try {
+                    await capNhatCauHinh(chinhSuaSyringe, chinhSuaSpeed, chinhSuaVolume)
+                    setHienThiManHinhChinhSua(false)
+                    themLog('thanh_cong', 'Đã lưu cấu hình')
+                  } catch (err) {
+                    themLog('loi', 'Lỗi lưu: ' + (err as Error).message)
+                  }
+                }}
+                className="flex-1 py-3 bg-green-600 text-white font-bold rounded hover:bg-green-700"
+              >
+                Lưu
+              </button>
+              <button
+                onClick={() => {
+                  setHienThiManHinhChinhSua(false)
+                  themLog('thong_tin', 'Đã hủy chỉnh sửa')
+                }}
+                className="flex-1 py-3 bg-gray-600 text-white font-bold rounded hover:bg-gray-700"
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+
+          {/* Modal chọn ống - REUSE */}
+          {hienThiModalOng && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+              <div className="medical-card p-6 max-w-sm w-full mx-4">
+                <h3 className="text-lg font-bold text-white mb-4">Chọn loại ống tiêm</h3>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      setChinhSuaSyringe(0)
+                      setHienThiModalOng(false)
+                    }}
+                    className={`w-full p-3 rounded text-left font-medium transition ${
+                      chinhSuaSyringe === 0 ? 'bg-[#4dd9f0]/20 text-[#4dd9f0]' : 'bg-white/5 text-white hover:bg-white/10'
+                    }`}
+                  >
+                    Vinahankook 10CC
+                  </button>
+                  <button
+                    onClick={() => {
+                      setChinhSuaSyringe(1)
+                      setHienThiModalOng(false)
+                    }}
+                    className={`w-full p-3 rounded text-left font-medium transition ${
+                      chinhSuaSyringe === 1 ? 'bg-[#4dd9f0]/20 text-[#4dd9f0]' : 'bg-white/5 text-white hover:bg-white/10'
+                    }`}
+                  >
+                    Vinahankook 20CC
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal tốc độ - THÊM VALIDATION */}
+          {hienThiModalTocDo && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+              <div className="medical-card p-6 max-w-sm w-full mx-4">
+                <h3 className="text-lg font-bold text-white mb-4">Chỉnh tốc độ</h3>
+
+                <div className="mb-4">
+                  <input
+                    type="range"
+                    min="1"
+                    max={chinhSuaSyringe === 0 ? 300 : 600}
+                    step="0.1"
+                    value={chinhSuaSpeed}
+                    onChange={(e) => setGiaTriNhap(parseFloat(e.target.value))}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-white/70 text-sm mt-2">
+                    <span>1</span>
+                    <span>{chinhSuaSyringe === 0 ? '300' : '600'} ml/h</span>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-white/70 text-sm mb-2">Nhập tốc độ (ml/h):</label>
+                  <input
+                    type="number"
+                    value={nhapTay ? giaTriNhap : chinhSuaSpeed}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value)
+                      setGiaTriNhap(val)
+                      setNhapTay(true)
+                    }}
+                    onFocus={() => setNhapTay(true)}
+                    onBlur={() => setNhapTay(false)}
+                    className="w-full px-4 py-2 rounded bg-[#162840] border border-white/20 text-white text-center"
+                    placeholder="60.0"
+                  />
+                  {giaTriNhap > (chinhSuaSyringe === 0 ? 300 : 600) && (
+                    <div className="text-red-400 text-xs mt-1">
+                      Tối đa: {chinhSuaSyringe === 0 ? 300 : 600} ml/h
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (giaTriNhap <= (chinhSuaSyringe === 0 ? 300 : 600)) {
+                        setChinhSuaSpeed(giaTriNhap)
+                        setGiaTriTam(giaTriNhap)
+                        setHienThiModalTocDo(false)
+                        setNhapTay(false)
+                      }
+                    }}
+                    disabled={giaTriNhap > (chinhSuaSyringe === 0 ? 300 : 600)}
+                    className={`flex-1 py-2 rounded font-semibold ${
+                      giaTriNhap > (chinhSuaSyringe === 0 ? 300 : 600)
+                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        : 'bg-[#4dd9f0] text-black hover:bg-[#4dd9f0]/80'
+                    }`}
+                  >
+                    Xác nhận
+                  </button>
+                  <button
+                    onClick={() => {
+                      setHienThiModalTocDo(false)
+                      setGiaTriNhap(chinhSuaSpeed)
+                      setNhapTay(false)
+                    }}
+                    className="flex-1 py-2 rounded bg-gray-600 text-white font-semibold hover:bg-gray-700"
+                  >
+                    Hủy
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal thể tích */}
+          {hienThiModalTheTich && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+              <div className="medical-card p-6 max-w-sm w-full mx-4">
+                <h3 className="text-lg font-bold text-white mb-4">Chỉnh thể tích</h3>
+
+                <div className="mb-4">
+                  <input
+                    type="range"
+                    min="1"
+                    max={chinhSuaSyringe === 0 ? 10 : 20}
+                    step="0.1"
+                    value={chinhSuaVolume}
+                    onChange={(e) => setGiaTriNhap(parseFloat(e.target.value))}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-white/70 text-sm mt-2">
+                    <span>1 ml</span>
+                    <span>{chinhSuaSyringe === 0 ? '10' : '20'} ml</span>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-white/70 text-sm mb-2">Nhập thể tích (ml):</label>
+                  <input
+                    type="number"
+                    value={nhapTay ? giaTriNhap : chinhSuaVolume}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value)
+                      setGiaTriNhap(val)
+                      setNhapTay(true)
+                    }}
+                    onFocus={() => setNhapTay(true)}
+                    onBlur={() => setNhapTay(false)}
+                    className="w-full px-4 py-2 rounded bg-[#162840] border border-white/20 text-white text-center"
+                    placeholder="5"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (giaTriNhap >= 1 && giaTriNhap <= (chinhSuaSyringe === 0 ? 10 : 20)) {
+                        setChinhSuaVolume(giaTriNhap)
+                        setHienThiModalTheTich(false)
+                        setNhapTay(false)
+                      }
+                    }}
+                    disabled={giaTriNhap < 1 || giaTriNhap > (chinhSuaSyringe === 0 ? 10 : 20)}
+                    className={`flex-1 py-2 rounded font-semibold ${
+                      giaTriNhap < 1 || giaTriNhap > (chinhSuaSyringe === 0 ? 10 : 20)
+                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        : 'bg-[#4dd9f0] text-black hover:bg-[#4dd9f0]/80'
+                    }`}
+                  >
+                    Xác nhận
+                  </button>
+                  <button
+                    onClick={() => {
+                      setHienThiModalTheTich(false)
+                      setGiaTriNhap(chinhSuaVolume)
+                      setNhapTay(false)
+                    }}
+                    className="flex-1 py-2 rounded bg-gray-600 text-white font-semibold hover:bg-gray-700"
+                  >
+                    Hủy
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

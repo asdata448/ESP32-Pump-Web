@@ -123,8 +123,8 @@ export interface TrangThaiUseESP32 {
  * Hằng số: các loại ống tiêm được hỗ trợ
  */
 export const LOAI_ONG_TIEM = {
-  '10CC': { index: 0, ten: 'Vinahankook 10CC', tocDoMax: 60, theTichMax: 10 },
-  '20CC': { index: 1, ten: 'Vinahankook 20CC', tocDoMax: 120, theTichMax: 20 },
+  '10CC': { index: 0, ten: 'Vinahankook 10CC', tocDoMax: 300, theTichMax: 10 },
+  '20CC': { index: 1, ten: 'Vinahankook 20CC', tocDoMax: 600, theTichMax: 20 },
 } as const
 
 /**
