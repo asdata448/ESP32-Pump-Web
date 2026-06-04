@@ -178,6 +178,9 @@ export function useESP32(): TrangThaiUseESP32 {
   const ketNoi = useCallback(
     async (ip: string) => {
       const baseUrl = `http://${ip}`
+      // CRITICAL: Switch to HTTP mode when connecting direct
+      setCheDoKetNoi('HTTP')
+
       setCauHinhKetNoi((prev) => ({
         ...prev,
         baseUrl,
@@ -189,6 +192,7 @@ export function useESP32(): TrangThaiUseESP32 {
         await ping(baseUrl)
         localStorage.setItem('esp32_base_url', baseUrl)
         startPolling(baseUrl)
+        themLog('thanh_cong', `Đã kết nối ESP32 tại ${baseUrl}`)
       } catch (err) {
         setCauHinhKetNoi((prev) => ({
           ...prev,
@@ -196,9 +200,10 @@ export function useESP32(): TrangThaiUseESP32 {
           dangKetNoi: false,
           loiKetNoi: 'Kết nối thất bại',
         }))
+        themLog('loi', 'Kết nối ESP32 thất bại')
       }
     },
-    [ping, startPolling]
+    [ping, startPolling, themLog]
   )
 
   // ===== NGẮT KẾT NỐI =====
@@ -614,6 +619,7 @@ export function useESP32(): TrangThaiUseESP32 {
     themLog,
     // Firebase state and functions
     cheDoKetNoi,
+    setCheDoKetNoiFirebase: setCheDoKetNoi,
     deviceId,
     dangKetNoiFirebase,
     ketNoiFirebase,

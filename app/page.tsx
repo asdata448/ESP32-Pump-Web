@@ -20,6 +20,7 @@ import {
   VolumeX,
   History,
   Cloud,
+  Lock,
 } from 'lucide-react'
 import { useESP32 } from '@/hooks/use-esp32-complete'
 import { TrangThaiESP32, MucNhatKy, MucLichSu } from '@/lib/esp32-types'
@@ -517,7 +518,7 @@ export default function App() {
                       {selectedProtocol.shortName}
                     </span>
                     {selectedProtocol.fixedRate && (
-                      <Lock className="h-3 w-3 text-yellow-500" title="Tốc độ cố định" />
+                      <Lock className="h-3 w-3 text-yellow-500" />
                     )}
                   </>
                 ) : (

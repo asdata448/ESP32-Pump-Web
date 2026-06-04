@@ -41,6 +41,13 @@ const stateConfig: Record<PumpState, {
     borderColor: 'border-primary/30',
     icon: Syringe,
   },
+  PROTOCOL_SELECT: {
+    label: 'CHỌN PROTOCOL',
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-400/10',
+    borderColor: 'border-purple-400/30',
+    icon: Settings,
+  },
   MAIN: {
     label: 'MÀN HÌNH CHÍNH',
     color: 'text-muted-foreground',
