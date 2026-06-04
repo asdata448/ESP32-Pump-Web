@@ -25,6 +25,8 @@ import { useESP32 } from '@/hooks/use-esp32-complete'
 import { TrangThaiESP32, MucNhatKy, MucLichSu } from '@/lib/esp32-types'
 import { useFirebaseHistory } from '@/hooks/use-firebase-history'
 import { FirebaseHistoryPanel } from '@/components/firebase/firebase-history-panel'
+import { ProtocolSelectionDialog } from '@/components/esp32/protocol-selection-dialog'
+import { PROTOCOLS, type ProtocolId, type SyringeType } from '@/lib/pump-types'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN APP COMPONENT - Toàn bộ logic trong 1 file
@@ -79,6 +81,39 @@ export default function App() {
   const [chinhSuaSpeed, setChinhSuaSpeed] = useState(60)
   const [chinhSuaVolume, setChinhSuaVolume] = useState(5)
   const [prevContactFound, setPrevContactFound] = useState(false)
+
+  // ===== PROTOCOL STATE =====
+  const [hienThiProtocolSelect, setHienThiProtocolSelect] = useState(false)
+  const [selectedProtocolId, setSelectedProtocolId] = useState<ProtocolId | null>(null)
+  const [selectedProtocol, setSelectedProtocol] = useState<any>(null)
+
+  // ===== HANDLERS =====
+  const handleSelectProtocol = (
+    protocolId: ProtocolId | null,
+    syringeType: SyringeType,
+    speed: number,
+    volume: number
+  ) => {
+    if (protocolId) {
+      const protocol = PROTOCOLS.find(p => p.id === protocolId)
+      setSelectedProtocolId(protocolId)
+      setSelectedProtocol(protocol)
+      setChinhSuaSpeed(speed)
+      setChinhSuaVolume(volume)
+      setChinhSuaSyringe(syringeType === '10CC' ? 0 : 1)
+      // Sync to ESP32/Firebase
+      capNhatCauHinh(syringeType === '10CC' ? 0 : 1, speed, volume)
+    } else {
+      setSelectedProtocolId(null)
+      setSelectedProtocol(null)
+      // Manual mode - giữ nguyên speed/volume hiện tại
+      // Không gửi command để không thay đổi settings
+    }
+  }
+
+  const openProtocolSelect = () => {
+    setHienThiProtocolSelect(true)
+  }
 
   // ===== FIREBASE STATE =====
   const [hienThiLichSuFirebase, setHienThiLichSuFirebase] = useState(false)
@@ -458,7 +493,7 @@ export default function App() {
           </div>
 
           {/* KHỐI THIẾT LẬP */}
-          <div className="px-6 py-3 border-b border-white/10">
+          <div className="px-6 py-3 border-b border-white/10 space-y-2">
             <button
               onClick={() => setHienThiModalOng(true)}
               className="w-full flex items-center justify-between dropdown-trigger px-4 py-2.5"
@@ -471,6 +506,27 @@ export default function App() {
                 <ChevronRight className="h-4 w-4 text-white/50" />
               </div>
             </button>
+
+            {/* Protocol Info */}
+            <div className="flex items-center justify-between px-4 py-2 bg-white/5 rounded-lg">
+              <span className="param-label">Protocol</span>
+              <div className="flex items-center gap-2">
+                {selectedProtocol ? (
+                  <>
+                    <span className="text-xs font-medium text-[#4dd9f0]">
+                      {selectedProtocol.shortName}
+                    </span>
+                    {selectedProtocol.fixedRate && (
+                      <Lock className="h-3 w-3 text-yellow-500" title="Tốc độ cố định" />
+                    )}
+                  </>
+                ) : (
+                  <span className="text-xs text-white/50">
+                    Thủ công
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* KHỐI SỐ LIỆU 2x2 */}
@@ -920,8 +976,17 @@ export default function App() {
             setHienThiModalOng(false)
           }}
           onHuy={() => setHienThiModalOng(false)}
+          openProtocolSelect={openProtocolSelect}
         />
       )}
+
+      {/* MODAL CHỌN PROTOCOL */}
+      <ProtocolSelectionDialog
+        isOpen={hienThiProtocolSelect}
+        onClose={() => setHienThiProtocolSelect(false)}
+        selectedSyringe={trangThaiESP32?.syringe === '10CC' ? '10CC' : '20CC'}
+        onSelectProtocol={handleSelectProtocol}
+      />
 
       {/* XÁC NHẬN DỪNG */}
       {hienThiXacNhanDung && (
@@ -1579,9 +1644,11 @@ function ModalChinhSoLieu({
 function ModalChonOng({
   onXacNhan,
   onHuy,
+  openProtocolSelect
 }: {
   onXacNhan: (idx: number) => void
   onHuy: () => void
+  openProtocolSelect: () => void
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
@@ -1596,7 +1663,10 @@ function ModalChonOng({
           ].map((ong) => (
             <button
               key={ong.idx}
-              onClick={() => onXacNhan(ong.idx)}
+              onClick={() => {
+                onXacNhan(ong.idx)
+                openProtocolSelect()
+              }}
               className="w-full px-4 py-3 rounded-lg border border-white/20 text-white hover:bg-white/10 transition"
             >
               {ong.ten}

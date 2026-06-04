@@ -2,6 +2,7 @@
 export type PumpState =
   | 'BOOT'
   | 'SYRINGE'
+  | 'PROTOCOL_SELECT'
   | 'MAIN'
   | 'SETUP'
   | 'ADJUST'
@@ -14,6 +15,7 @@ export type PumpState =
 export const PUMP_STATES: PumpState[] = [
   'BOOT',
   'SYRINGE',
+  'PROTOCOL_SELECT',
   'MAIN',
   'SETUP',
   'PREPARE',
@@ -25,6 +27,7 @@ export const PUMP_STATES: PumpState[] = [
 export const STATE_LABELS: Record<PumpState, string> = {
   BOOT: 'Khởi động',
   SYRINGE: 'Chọn ống tiêm',
+  PROTOCOL_SELECT: 'Chọn protocol',
   MAIN: 'Màn hình chính',
   SETUP: 'Cài đặt',
   ADJUST: 'Điều chỉnh',
@@ -33,6 +36,176 @@ export const STATE_LABELS: Record<PumpState, string> = {
   RESULT: 'Đang chạy',
   ERROR: 'Lỗi',
   DONE: 'Hoàn thành',
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PROTOCOL SYSTEM - Medical Infusion Protocols
+// ═══════════════════════════════════════════════════════════════════════════
+// System provides pre-configured medical protocols for common infusion scenarios.
+// Each protocol includes: syringe compatibility, rate ranges, default VTBI, etc.
+//
+// Usage:
+// 1. User selects syringe type (10CC or 20CC)
+// 2. System filters compatible protocols
+// 3. User selects protocol or chooses MANUAL mode
+// 4. Protocol settings are applied to pump configuration
+//
+// Integration: Used in ProtocolSelectionDialog and ProtocolSelectScreen components
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Protocol types
+export type ProtocolId =
+  | 'ADULT_ACUTE_SLOW'
+  | 'ADULT_ACUTE_AVG'
+  | 'ICU_VENT_SLOW'
+  | 'ICU_VENT_FAST'
+  | 'ICU_SHOCK_SLOW'
+  | 'ICU_SHOCK_AVG'
+  | 'PEDIATRIC_10CC'
+  | 'PEDIATRIC_20CC'
+  | 'NEONATAL_NICU'
+  | 'POST_OP_PCA'
+  | 'MANUAL'
+
+export interface InfusionProtocol {
+  id: ProtocolId
+  displayName: string      // Full protocol name
+  shortName: string        // Short display name
+  syringeIndex: number     // 0=10CC, 1=20CC
+  defaultRate: number      // Default infusion rate (ml/h)
+  minRate: number         // Minimum rate (ml/h)
+  maxRate: number         // Maximum rate (ml/h)
+  defaultVTBI: number     // Default Volume To Be Infused (ml)
+  fixedRate: boolean      // If true, rate cannot be changed
+  description: string     // Human-readable description (duration, etc.)
+}
+
+export const PROTOCOLS: InfusionProtocol[] = [
+  {
+    id: 'ADULT_ACUTE_SLOW',
+    displayName: 'Người lớn đau cấp',
+    shortName: 'Đau cấp 10mL',
+    syringeIndex: 0,
+    defaultRate: 1.0,
+    minRate: 1.0,
+    maxRate: 5.0,
+    defaultVTBI: 10,
+    fixedRate: false,
+    description: '~10 giờ'
+  },
+  {
+    id: 'ADULT_ACUTE_AVG',
+    displayName: 'Người lớn đau cấp',
+    shortName: 'Đau cấp 20mL',
+    syringeIndex: 1,
+    defaultRate: 2.0,
+    minRate: 1.0,
+    maxRate: 15.0,
+    defaultVTBI: 20,
+    fixedRate: false,
+    description: '~10 giờ'
+  },
+  {
+    id: 'ICU_VENT_SLOW',
+    displayName: 'ICU người lớn thở máy',
+    shortName: 'ICU thở máy 3.5',
+    syringeIndex: 1,
+    defaultRate: 3.5,
+    minRate: 2.1,
+    maxRate: 28.0,
+    defaultVTBI: 20,
+    fixedRate: false,
+    description: '~5h 43m'
+  },
+  {
+    id: 'ICU_VENT_FAST',
+    displayName: 'ICU người lớn thở máy',
+    shortName: 'ICU thở máy 7.0',
+    syringeIndex: 1,
+    defaultRate: 7.0,
+    minRate: 2.1,
+    maxRate: 28.0,
+    defaultVTBI: 20,
+    fixedRate: false,
+    description: '~2h 51m'
+  },
+  {
+    id: 'ICU_SHOCK_SLOW',
+    displayName: 'ICU sốc người lớn',
+    shortName: 'ICU sốc 2.6',
+    syringeIndex: 1,
+    defaultRate: 2.6,
+    minRate: 0.5,
+    maxRate: 21.0,
+    defaultVTBI: 20,
+    fixedRate: false,
+    description: '~7h 41m'
+  },
+  {
+    id: 'ICU_SHOCK_AVG',
+    displayName: 'ICU sốc người lớn',
+    shortName: 'ICU sốc 5.0',
+    syringeIndex: 1,
+    defaultRate: 5.0,
+    minRate: 0.5,
+    maxRate: 21.0,
+    defaultVTBI: 20,
+    fixedRate: false,
+    description: '~4 giờ'
+  },
+  {
+    id: 'PEDIATRIC_10CC',
+    displayName: 'Nhi khoa/kháng sinh',
+    shortName: 'Nhi khoa 10mL',
+    syringeIndex: 0,
+    defaultRate: 10.0,
+    minRate: 10.0,
+    maxRate: 10.0,
+    defaultVTBI: 10,
+    fixedRate: true,
+    description: '~60 phút'
+  },
+  {
+    id: 'PEDIATRIC_20CC',
+    displayName: 'Nhi khoa/kháng sinh',
+    shortName: 'Nhi khoa 20mL',
+    syringeIndex: 1,
+    defaultRate: 20.0,
+    minRate: 20.0,
+    maxRate: 20.0,
+    defaultVTBI: 20,
+    fixedRate: true,
+    description: '~60 phút'
+  },
+  {
+    id: 'NEONATAL_NICU',
+    displayName: 'Sơ sinh/NICU',
+    shortName: 'Sơ sinh NICU',
+    syringeIndex: 0,
+    defaultRate: 1.8,
+    minRate: 1.2,
+    maxRate: 2.4,
+    defaultVTBI: 10,
+    fixedRate: false,
+    description: '~5h 33m'
+  },
+  {
+    id: 'POST_OP_PCA',
+    displayName: 'Sau mổ/PCA',
+    shortName: 'PCA mô phỏng',
+    syringeIndex: 0,
+    defaultRate: 60.0,
+    minRate: 30.0,
+    maxRate: 60.0,
+    defaultVTBI: 1,
+    fixedRate: false,
+    description: '~1 phút'
+  }
+]
+
+export function getProtocolById(id: ProtocolId): InfusionProtocol | undefined {
+  if (id === 'MANUAL') return undefined
+  return PROTOCOLS.find(p => p.id === id)
 }
 
 // Syringe types
@@ -77,6 +250,9 @@ export interface PumpStatus {
   state: PumpState
   syringe: SyringeType
   syringe_index: number
+  protocol_id?: ProtocolId
+  protocol_name?: string
+  fixed_rate?: boolean
   speed_mlh: number
   volume_ml: number
   remaining_sec: number
@@ -98,6 +274,7 @@ export interface PumpStatus {
 
 export interface PumpConfig {
   syringe_index: number
+  protocol_id?: ProtocolId
   speed_mlh: number
   volume_ml: number
 }
@@ -128,6 +305,9 @@ export const DEFAULT_STATUS: PumpStatus = {
   state: 'MAIN',
   syringe: '10CC',
   syringe_index: 0,
+  protocol_id: 'MANUAL',
+  protocol_name: 'Thủ công',
+  fixed_rate: false,
   speed_mlh: 1.0,
   volume_ml: 5,
   remaining_sec: 0,
@@ -149,6 +329,7 @@ export const DEFAULT_STATUS: PumpStatus = {
 
 export const DEFAULT_CONFIG: PumpConfig = {
   syringe_index: 0,
+  protocol_id: 'MANUAL',
   speed_mlh: 1.0,
   volume_ml: 5,
 }
