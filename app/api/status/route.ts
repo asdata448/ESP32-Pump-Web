@@ -21,7 +21,7 @@ let mockState: PumpStatus = {
   fsr_occlusion_threshold: 2000,
   limit_pressed: false,
   buzzer_on: false,
-  ip: '192.168.4.1',
+  ip: '172.20.10.9',
   wifi_mode: 'AP',
 }
 

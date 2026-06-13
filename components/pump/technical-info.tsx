@@ -10,7 +10,7 @@ export function TechnicalInfo() {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Wrench className="h-5 w-5" />
-          Thong tin ky thuat
+          Thông tin kỹ thuật
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -18,7 +18,7 @@ export function TechnicalInfo() {
         <div>
           <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
             <Cpu className="h-4 w-4" />
-            Thong so dong co
+            Thông số động cơ
           </h4>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="rounded bg-muted p-2">
@@ -42,7 +42,7 @@ export function TechnicalInfo() {
 
         {/* Syringe Specs */}
         <div>
-          <h4 className="text-sm font-medium mb-2">Thong so ong tiem</h4>
+          <h4 className="text-sm font-medium mb-2">Thông số ống tiêm</h4>
           <div className="grid grid-cols-2 gap-2 text-xs">
             {SYRINGE_SPECS.map(spec => (
               <div key={spec.name} className="rounded bg-muted p-2">
@@ -55,7 +55,7 @@ export function TechnicalInfo() {
 
         {/* GPIO Pins */}
         <div>
-          <h4 className="text-sm font-medium mb-2">GPIO Pin mapping</h4>
+          <h4 className="text-sm font-medium mb-2">Cấu hình GPIO</h4>
           <div className="grid grid-cols-3 gap-1 text-xs font-mono">
             <div className="rounded bg-muted p-1.5 text-center">
               <span className="text-muted-foreground block text-[10px]">ENA</span>
@@ -86,7 +86,7 @@ export function TechnicalInfo() {
 
         {/* TFT Pins */}
         <div>
-          <h4 className="text-sm font-medium mb-2">TFT ILI9341 + XPT2046</h4>
+          <h4 className="text-sm font-medium mb-2">Màn hình TFT ILI9341 + XPT2046</h4>
           <div className="grid grid-cols-5 gap-1 text-xs font-mono">
             <div className="rounded bg-muted p-1.5 text-center">
               <span className="text-muted-foreground block text-[10px]">CS</span>

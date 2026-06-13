@@ -36,11 +36,11 @@ export function ConfigCard({ status, onSaveConfig, disabled }: ConfigCardProps) 
     const volumeNum = parseFloat(volume)
 
     if (isNaN(speedNum) || speedNum <= 0 || speedNum > 999) {
-      setError('Toc do phai tu 0.1 den 999 ml/h')
+      setError('Tốc độ phải từ 0.1 đến 999 ml/h')
       return
     }
     if (isNaN(volumeNum) || volumeNum <= 0 || volumeNum > 99) {
-      setError('The tich phai tu 0.1 den 99 ml')
+      setError('Thể tích phải từ 0.1 đến 99 ml')
       return
     }
 
@@ -52,7 +52,7 @@ export function ConfigCard({ status, onSaveConfig, disabled }: ConfigCardProps) 
         volume_ml: volumeNum,
       })
     } catch (e) {
-      setError('Khong the luu cau hinh. Vui long thu lai.')
+      setError('Không thể lưu cấu hình. Vui lòng thử lại.')
     } finally {
       setIsSaving(false)
     }
@@ -65,7 +65,7 @@ export function ConfigCard({ status, onSaveConfig, disabled }: ConfigCardProps) 
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Settings className="h-5 w-5" />
-          Cau hinh bom
+          Cấu hình bơm
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -73,7 +73,7 @@ export function ConfigCard({ status, onSaveConfig, disabled }: ConfigCardProps) 
         <div className="space-y-2">
           <Label className="flex items-center gap-2">
             <Syringe className="h-4 w-4" />
-            Loai ong tiem
+            Loại ống tiêm
           </Label>
           <RadioGroup
             value={syringeIndex.toString()}
@@ -96,7 +96,7 @@ export function ConfigCard({ status, onSaveConfig, disabled }: ConfigCardProps) 
         <div className="space-y-2">
           <Label htmlFor="speed" className="flex items-center gap-2">
             <Gauge className="h-4 w-4" />
-            Toc do (ml/h)
+            Tốc độ (ml/h)
           </Label>
           <Input
             id="speed"
@@ -115,7 +115,7 @@ export function ConfigCard({ status, onSaveConfig, disabled }: ConfigCardProps) 
         <div className="space-y-2">
           <Label htmlFor="volume" className="flex items-center gap-2">
             <Droplets className="h-4 w-4" />
-            The tich (ml)
+            Thể tích (ml)
           </Label>
           <Input
             id="volume"
@@ -133,7 +133,7 @@ export function ConfigCard({ status, onSaveConfig, disabled }: ConfigCardProps) 
         {/* Estimated Time */}
         <div className="rounded-lg bg-muted p-3">
           <p className="text-sm text-muted-foreground">
-            Thoi gian uoc tinh:{' '}
+            Thời gian ước tính:{' '}
             <span className="font-mono font-medium text-foreground">
               {(() => {
                 const s = parseFloat(speed)

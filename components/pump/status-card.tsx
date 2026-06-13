@@ -33,7 +33,7 @@ function StatusItem({
       </div>
       <div className={`flex items-center gap-2 ${isActive ? activeColor : inactiveColor}`}>
         <span className={`h-2 w-2 rounded-full ${isActive ? 'bg-current animate-pulse-dot' : 'bg-muted-foreground/30'}`} />
-        <span className="text-sm font-medium">{value ? 'Co' : 'Khong'}</span>
+        <span className="text-sm font-medium">{value ? 'Có' : 'Không'}</span>
       </div>
     </div>
   )
@@ -45,47 +45,47 @@ export function StatusCard({ status }: StatusCardProps) {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <Activity className="h-5 w-5" />
-          Trang thai he thong
+          Trạng thái hệ thống
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-1">
         {/* Current State */}
         <div className="flex items-center justify-between py-2 border-b border-border">
-          <span className="text-sm">Trang thai hien tai</span>
+          <span className="text-sm">Trạng thái hiện tại</span>
           <span className={`px-2 py-1 rounded text-sm font-medium ${getStateBgColor(status.state)} ${getStateColor(status.state)}`}>
             {STATE_LABELS[status.state]}
           </span>
         </div>
 
-        <StatusItem 
-          label="Da ve home" 
-          value={status.homed} 
+        <StatusItem
+          label="Đã về home"
+          value={status.homed}
           icon={Home}
         />
-        
-        <StatusItem 
-          label="Da tiep xuc ong tiem" 
-          value={status.contact_found} 
+
+        <StatusItem
+          label="Đã tiếp xúc ống tiêm"
+          value={status.contact_found}
           icon={Hand}
         />
-        
-        <StatusItem 
-          label="Canh bao FSR" 
-          value={status.fsr_alert} 
+
+        <StatusItem
+          label="Cảnh báo FSR"
+          value={status.fsr_alert}
           icon={AlertTriangle}
           activeColor="text-destructive"
         />
-        
-        <StatusItem 
-          label="Bom dang chay" 
-          value={status.pump_running} 
+
+        <StatusItem
+          label="Bơm đang chạy"
+          value={status.pump_running}
           icon={Play}
           activeColor="text-primary"
         />
-        
-        <StatusItem 
-          label="Da tam dung" 
-          value={status.paused} 
+
+        <StatusItem
+          label="Đã tạm dừng"
+          value={status.paused}
           icon={Pause}
           activeColor="text-warning-foreground"
         />

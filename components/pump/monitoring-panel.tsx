@@ -126,7 +126,7 @@ export function MonitoringPanel({
       <div className="mb-4">
         <div className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
           <AlertTriangle className="h-4 w-4" />
-          Canh bao gan nhat
+          Cảnh báo gần nhất
         </div>
         <div className="alert-box-warning flex items-center gap-3 p-3">
           <AlertTriangle className={`h-5 w-5 shrink-0 ${status.fsr_alert ? 'text-destructive' : 'text-warning'}`} />
@@ -135,7 +135,7 @@ export function MonitoringPanel({
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
             <Clock className="h-3.5 w-3.5" />
-            <span suppressHydrationWarning>{currentTime.slice(0, 5)} AM</span>
+            <span suppressHydrationWarning>{currentTime.slice(0, 5)}</span>
           </div>
         </div>
       </div>

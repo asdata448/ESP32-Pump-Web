@@ -61,17 +61,17 @@ export function ControlPanel({
   const canPause = status.pump_running && !status.paused
   const canResume = status.paused
 
-  const latestEvent = status.fsr_alert 
-    ? 'Phat hien ap luc cao'
+  const latestEvent = status.fsr_alert
+    ? 'Phát hiện áp lực cao'
     : !status.contact_found
-      ? 'Chua nhan dien ong'
-      : 'He thong san sang'
+      ? 'Chưa nhận diện ống'
+      : 'Hệ thống sẵn sàng'
 
   return (
     <div className="medical-panel p-4">
       {/* Syringe Type Header */}
       <div className="syringe-header mb-4">
-        <span className="text-sm text-muted-foreground">Ong </span>
+        <span className="text-sm text-muted-foreground">Ống: </span>
         <span className="text-sm font-semibold text-white">
           Vinahankook {syringeSpec.name}
         </span>
@@ -125,25 +125,25 @@ export function ControlPanel({
         {canStart && (
           <button onClick={onStart} className="btn-control btn-primary flex-1">
             <Play className="h-4 w-4" />
-            Bat dau
+            Bắt đầu
           </button>
         )}
         {canPause && (
           <button onClick={onPause} className="btn-control btn-secondary flex-1">
             <Pause className="h-4 w-4" />
-            Tam dung
+            Tạm dừng
           </button>
         )}
         {canResume && (
           <button onClick={onResume} className="btn-control btn-primary flex-1">
             <Play className="h-4 w-4" />
-            Tiep tuc
+            Tiếp tục
           </button>
         )}
         {!canStart && !canPause && !canResume && (
           <button className="btn-control btn-primary flex-1 opacity-50" disabled>
             <Play className="h-4 w-4" />
-            Bat dau
+            Bắt đầu
           </button>
         )}
         
@@ -156,32 +156,32 @@ export function ControlPanel({
         {/* Back Button */}
         <button onClick={onBack} className="btn-control btn-secondary flex-1">
           <ArrowLeft className="h-4 w-4" />
-          Back
+          Quay lại
         </button>
       </div>
 
       {/* System Actions */}
       <div className="mb-4">
-        <div className="text-sm text-muted-foreground mb-2">Thao tac he thong</div>
-        
-        <button 
+        <div className="text-sm text-muted-foreground mb-2">Thao tác hệ thống</div>
+
+        <button
           className="action-row w-full"
           onClick={onResetAlarm}
         >
           <div className="flex items-center gap-3">
             <Bell className="h-5 w-5 text-warning" />
-            <span className="text-sm text-white">Xac nhan bao dong</span>
+            <span className="text-sm text-white">Xác nhận báo động</span>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
 
-        <button 
+        <button
           className="action-row w-full"
           onClick={onRehome}
         >
           <div className="flex items-center gap-3">
             <RotateCcw className="h-5 w-5 text-primary" />
-            <span className="text-sm text-white">Ve home</span>
+            <span className="text-sm text-white">Về home</span>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
@@ -189,13 +189,13 @@ export function ControlPanel({
 
       {/* Recent Events */}
       <div>
-        <div className="text-sm text-muted-foreground mb-2">Su kien gan nhat</div>
+        <div className="text-sm text-muted-foreground mb-2">Sự kiện gần nhất</div>
         <div className="event-item">
           <AlertTriangle className={`h-4 w-4 shrink-0 ${status.fsr_alert ? 'text-destructive' : 'text-warning'}`} />
           <span className="flex-1 text-sm text-white truncate">{latestEvent}</span>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Clock className="h-3.5 w-3.5" />
-            <span suppressHydrationWarning>{currentTime.slice(0, 5)} AM</span>
+            <span suppressHydrationWarning>{currentTime.slice(0, 5)}</span>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </div>
@@ -203,8 +203,8 @@ export function ControlPanel({
 
       {/* Last Update Footer */}
       <div className="mt-4 flex justify-between text-xs text-muted-foreground border-t border-border/30 pt-3">
-        <span suppressHydrationWarning>Cap nhat: {currentTime}</span>
-        <span suppressHydrationWarning>Cap nhat: {currentTime}</span>
+        <span suppressHydrationWarning>Cập nhật: {currentTime}</span>
+        <span suppressHydrationWarning>Cập nhật: {currentTime}</span>
       </div>
     </div>
   )

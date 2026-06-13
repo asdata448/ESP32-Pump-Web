@@ -22,7 +22,7 @@ export function ProtocolSelectScreen({
   )
 
   const groupedProtocols = [
-    { category: 'Người lớn đau cấp', protocols: compatibleProtocols.filter(p => p.id.startsWith('ADULT_ACUTE')) },
+    { category: '123', protocols: compatibleProtocols.filter(p => p.id.startsWith('ADULT_ACUTE')) },
     { category: 'ICU người lớn thở máy', protocols: compatibleProtocols.filter(p => p.id.startsWith('ICU_VENT')) },
     { category: 'ICU sốc người lớn', protocols: compatibleProtocols.filter(p => p.id.startsWith('ICU_SHOCK')) },
     { category: 'Nhi khoa/Kháng sinh', protocols: compatibleProtocols.filter(p => p.id.startsWith('PEDIATRIC')) },
@@ -51,7 +51,7 @@ export function ProtocolSelectScreen({
 
       {/* Info */}
       <div className="text-sm text-muted-foreground mb-4">
-        Chọn protocol bệnh nhân ({compatibleProtocols.length} available for {selectedSyringe})
+        Chọn protocol bệnh nhân ({compatibleProtocols.length} có sẵn cho {selectedSyringe})
       </div>
 
       {/* Protocol List */}
@@ -82,7 +82,7 @@ export function ProtocolSelectScreen({
                     </div>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span>Tốc độ: {protocol.defaultRate} mL/h</span>
-                      <span>Range: {protocol.minRate}-{protocol.maxRate} mL/h</span>
+                      <span>Phạm vi: {protocol.minRate}-{protocol.maxRate} mL/h</span>
                       <span>VTBI: {protocol.defaultVTBI} ml</span>
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">

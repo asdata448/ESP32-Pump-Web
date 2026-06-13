@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Wifi, 
-  Syringe, 
-  Play, 
-  Pause, 
-  Square, 
-  RotateCcw, 
+import {
+  Wifi,
+  Syringe,
+  Play,
+  Pause,
+  Square,
+  RotateCcw,
   Home,
   Settings,
   ChevronRight,
@@ -38,8 +38,9 @@ import { DemoControlPanel } from '@/components/demo/demo-control-panel'
 import { DemoHistoryPanel } from '@/components/demo/demo-history-panel'
 import { TechnicalSpecs } from '@/components/demo/technical-specs'
 import { FirebaseHistoryPanel } from '@/components/firebase/firebase-history-panel'
+import { ProtocolSelectScreen } from '@/components/demo/protocol-select-screen'
 import { savePumpHistory } from '@/lib/firebase'
-import { formatTime, SYRINGE_SPECS } from '@/lib/pump-types'
+import { formatTime, SYRINGE_SPECS, PROTOCOLS, type ProtocolId } from '@/lib/pump-types'
 import { SYRINGE_CALIBRATION, FSR_THRESHOLDS } from '@/lib/demo-types'
 import Link from 'next/link'
 
@@ -48,6 +49,11 @@ export default function DemoPage() {
   const [showHistory, setShowHistory] = useState(false)
   const [historyTab, setHistoryTab] = useState<'local' | 'firebase'>('local')
   const [firebaseEnabled, setFirebaseEnabled] = useState(true)
+
+  // Protocol selection state
+  const [showProtocolSelect, setShowProtocolSelect] = useState(false)
+  const [selectedSyringeForProtocol, setSelectedSyringeForProtocol] = useState<'10CC' | '20CC'>('10CC')
+  const [selectedProtocol, setSelectedProtocol] = useState<ProtocolId | null>(null)
 
   // Use Firebase-enabled simulation
   const sim = usePumpSimulationWithFirebase({
@@ -88,7 +94,14 @@ export default function DemoPage() {
       case 'BOOT':
         return <BootScreen />
       case 'SYRINGE':
-        return <SyringeSelectScreen onSelect={sim.selectSyringe} />
+        return <SyringeSelectScreen onSelect={(type) => {
+          setSelectedSyringeForProtocol(type)
+          sim.selectSyringe(type)
+          // Show protocol selection after syringe selection
+          setTimeout(() => {
+            setShowProtocolSelect(true)
+          }, 300)
+        }} />
       case 'MAIN':
         return (
           <MainMenuScreen 
@@ -106,6 +119,7 @@ export default function DemoPage() {
             estimatedTime={state.estimatedTimeSec}
             stepsPerMl={state.stepsPerMl}
             totalSteps={state.totalSteps}
+            selectedProtocol={selectedProtocol}
             onUpdateConfig={sim.updateConfig}
             onPrepare={sim.prepare}
             onBack={sim.goBack}
@@ -213,16 +227,50 @@ export default function DemoPage() {
             {/* Main Panel */}
             <div className={`medical-panel p-6 ${presentationMode ? 'min-h-[70vh]' : 'min-h-[400px]'}`}>
               <AnimatePresence mode="wait">
-                <motion.div
-                  key={state.state}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
-                  className="h-full"
-                >
-                  {renderScreen()}
-                </motion.div>
+                {showProtocolSelect ? (
+                  <motion.div
+                    key="protocol-select"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="h-full"
+                  >
+                    <ProtocolSelectScreen
+                      selectedSyringe={selectedSyringeForProtocol}
+                      onSelect={(protocolId, syringeType, speed, volume) => {
+                        // Save selected protocol
+                        setSelectedProtocol(protocolId)
+                        // Update simulation with protocol values
+                        sim.updateConfig(speed, volume)
+                        setShowProtocolSelect(false)
+                        // Go to MAIN state after selecting protocol
+                        setTimeout(() => {
+                          sim.gotoSetup()
+                        }, 100)
+                      }}
+                      onManual={() => {
+                        setSelectedProtocol(null) // Manual mode - no protocol
+                        setShowProtocolSelect(false)
+                        // Go to MAIN state for manual mode
+                        setTimeout(() => {
+                          sim.gotoSetup()
+                        }, 100)
+                      }}
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={state.state}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="h-full"
+                  >
+                    {renderScreen()}
+                  </motion.div>
+                )}
               </AnimatePresence>
             </div>
 
@@ -491,6 +539,7 @@ function SetupScreen({
   estimatedTime,
   stepsPerMl,
   totalSteps,
+  selectedProtocol,
   onUpdateConfig,
   onPrepare,
   onBack,
@@ -501,6 +550,7 @@ function SetupScreen({
   estimatedTime: number
   stepsPerMl: number
   totalSteps: number
+  selectedProtocol: any
   onUpdateConfig: (speed: number, volume: number) => void
   onPrepare: () => void
   onBack: () => void
@@ -509,6 +559,17 @@ function SetupScreen({
   const [localVolume, setLocalVolume] = useState('')
   const [isInitialized, setIsInitialized] = useState(false)
   const cal = SYRINGE_CALIBRATION[syringeType as '10CC' | '20CC']
+
+  // Get protocol constraints if selected
+  const protocol = selectedProtocol ? PROTOCOLS.find(p => p.id === selectedProtocol) : null
+  const isFixedRate = protocol?.fixedRate || false
+  const minRate = protocol?.minRate ?? cal.minSpeedMlh
+  const maxRate = protocol?.maxRate ?? cal.maxSpeedMlh
+  const protocolVTBI = protocol?.defaultVTBI ?? null  // VTBI từ protocol (nếu có)
+  const maxVolume = protocolVTBI ?? cal.maxVolume
+
+  // Lock volume when protocol is selected (all protocols have fixed VTBI)
+  const isVolumeLocked = selectedProtocol !== null
 
   // Initialize local state from props after mount to avoid hydration mismatch
   useEffect(() => {
@@ -520,9 +581,13 @@ function SetupScreen({
   }, [speed, volume, isInitialized])
 
   const handleSpeedChange = (value: string) => {
+    // Don't allow speed change for fixed rate protocols
+    if (isFixedRate) return
+
     setLocalSpeed(value)
     const num = parseFloat(value)
-    if (!isNaN(num) && num >= cal.minSpeedMlh && num <= cal.maxSpeedMlh) {
+    // Validate within protocol range or default calibration range
+    if (!isNaN(num) && num >= minRate && num <= maxRate) {
       onUpdateConfig(num, parseFloat(localVolume) || volume)
     }
   }
@@ -530,7 +595,7 @@ function SetupScreen({
   const handleVolumeChange = (value: string) => {
     setLocalVolume(value)
     const num = parseFloat(value)
-    if (!isNaN(num) && num > 0 && num <= cal.maxVolume) {
+    if (!isNaN(num) && num > 0 && num <= maxVolume) {
       onUpdateConfig(parseFloat(localSpeed) || speed, num)
     }
   }
@@ -543,16 +608,50 @@ function SetupScreen({
           <Settings className="h-6 w-6 text-primary" />
           <h2 className="text-lg font-bold">CÀI ĐẶT THÔNG SỐ</h2>
         </div>
-        <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
-          {syringeType}
+        <div className="flex items-center gap-2">
+          {protocol && (
+            <div className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${
+              isFixedRate ? 'bg-yellow-500/20 text-yellow-600' : 'bg-cyan-500/20 text-cyan-600'
+            }`}>
+              {isFixedRate && <span className="text-xs">🔒</span>}
+              {protocol.shortName}
+            </div>
+          )}
+          <div className="px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+            {syringeType}
+          </div>
         </div>
       </div>
 
+      {/* Protocol Info */}
+      {protocol && (
+        <div className={`medical-panel-inner p-3 rounded-lg mb-4 ${isFixedRate ? 'border-yellow-500/50' : 'border-cyan-500/50'}`}>
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              <span className="font-medium">Protocol: </span>
+              <span className="ml-2">{protocol.displayName}</span>
+            </div>
+            {isFixedRate && (
+              <span className="text-xs bg-yellow-500/20 text-yellow-600 px-2 py-1 rounded">
+                TỐC ĐỘ KHÓNG ĐỔI
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+            <span>Phạm vi: {protocol.minRate} - {protocol.maxRate} mL/h</span>
+            <span>VTBI: {protocol.defaultVTBI} ml</span>
+            <span>⏱ {protocol.description}</span>
+          </div>
+        </div>
+      )}
+
       {/* Config Fields */}
       <div className="space-y-4 flex-1">
-        <div className="medical-panel-inner p-4 rounded-lg">
+        <div className={`medical-panel-inner p-4 rounded-lg ${isFixedRate ? 'opacity-60' : ''}`}>
           <label className="text-sm text-muted-foreground mb-2 block">
-            Toc do (ml/h) - Min: {cal.minSpeedMlh}, Max: {cal.maxSpeedMlh}
+            Tốc độ (ml/h)
+            {protocol && <span> - Phạm vi: {minRate} - {maxRate} mL/h</span>}
+            {isFixedRate && <span className="text-yellow-600 ml-2"> (KHÓNG ĐỔI)</span>}
           </label>
           <div className="flex items-center gap-2">
             <Gauge className="h-5 w-5 text-primary" />
@@ -562,16 +661,23 @@ function SetupScreen({
               onChange={(e) => handleSpeedChange(e.target.value)}
               className="text-2xl font-mono h-12"
               step="0.1"
-              min={cal.minSpeedMlh}
-              max={cal.maxSpeedMlh}
+              min={minRate}
+              max={maxRate}
+              disabled={isFixedRate}
             />
             <span className="text-muted-foreground">ml/h</span>
+            {isFixedRate && (
+              <span className="text-yellow-500" title="Tốc độ cố định theo protocol">🔒</span>
+            )}
           </div>
         </div>
 
         <div className="medical-panel-inner p-4 rounded-lg">
           <label className="text-sm text-muted-foreground mb-2 block">
-            The tich (ml) - Max: {cal.maxVolume}
+            The tich (ml)
+            {protocol && <span className="text-cyan-600 ml-2"> (Theo protocol: {protocolVTBI} ml)</span>}
+            {!protocol && <span> - Max: {maxVolume}</span>}
+            {isVolumeLocked && <span className="text-yellow-600 ml-2"> (CỐ ĐỊNH THEO PROTOCOL)</span>}
           </label>
           <div className="flex items-center gap-2">
             <Droplets className="h-5 w-5 text-primary" />
@@ -582,9 +688,13 @@ function SetupScreen({
               className="text-2xl font-mono h-12"
               step="0.5"
               min="0.1"
-              max={cal.maxVolume}
+              max={maxVolume}
+              disabled={isVolumeLocked}
             />
             <span className="text-muted-foreground">ml</span>
+            {isVolumeLocked && (
+              <span className="text-yellow-500" title="Thể tích cố định theo protocol">🔒</span>
+            )}
           </div>
         </div>
 

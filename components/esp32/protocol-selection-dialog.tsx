@@ -34,7 +34,7 @@ export function ProtocolSelectionDialog({
   )
 
   const groupedProtocols = [
-    { category: 'Người lớn đau cấp', protocols: compatibleProtocols.filter(p => p.id.startsWith('ADULT_ACUTE')) },
+    { category: 'Người lớn cấp cứu', protocols: compatibleProtocols.filter(p => p.id.startsWith('ADULT_ACUTE')) },
     { category: 'ICU người lớn thở máy', protocols: compatibleProtocols.filter(p => p.id.startsWith('ICU_VENT')) },
     { category: 'ICU sốc người lớn', protocols: compatibleProtocols.filter(p => p.id.startsWith('ICU_SHOCK')) },
     { category: 'Nhi khoa/Kháng sinh', protocols: compatibleProtocols.filter(p => p.id.startsWith('PEDIATRIC')) },
@@ -69,9 +69,9 @@ export function ProtocolSelectionDialog({
               <span className="text-primary font-bold">3</span>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">CHỌN PROTOCOL</h2>
+              <h2 className="text-xl font-bold text-white">CHỌN ĐỐI TƯỢNG</h2>
               <p className="text-sm text-muted-foreground">
-                {selectedSyringe} - {compatibleProtocols.length} protocols available
+                {selectedSyringe} - {compatibleProtocols.length} đối tượng có sẵn
               </p>
             </div>
           </div>
@@ -110,8 +110,8 @@ export function ProtocolSelectionDialog({
                         )}
                       </div>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>Speed: {protocol.defaultRate} mL/h</span>
-                        <span>Range: {protocol.minRate}-{protocol.maxRate} mL/h</span>
+                        <span>Tốc độ: {protocol.defaultRate} mL/h</span>
+                        <span>Phạm vi: {protocol.minRate}-{protocol.maxRate} mL/h</span>
                         <span>VTBI: {protocol.defaultVTBI} ml</span>
                       </div>
                       <div className="text-xs text-muted-foreground">

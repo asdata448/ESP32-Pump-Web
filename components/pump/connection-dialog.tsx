@@ -24,7 +24,7 @@ export function ConnectionDialog({
   onDisconnect,
   onTest
 }: ConnectionDialogProps) {
-  const [url, setUrl] = useState(baseUrl || 'http://192.168.4.1')
+  const [url, setUrl] = useState(baseUrl || 'http://172.20.10.9')
   const [isTesting, setIsTesting] = useState(false)
   const [testResult, setTestResult] = useState<boolean | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
@@ -118,11 +118,11 @@ export function ConnectionDialog({
               setUrl(e.target.value)
               setTestResult(null)
             }}
-            placeholder="http://192.168.4.1"
+            placeholder="http://172.20.10.9"
             className="w-full bg-input border border-border rounded-lg px-4 py-3 text-white font-mono focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
           <div className="mt-1 text-xs text-muted-foreground">
-            Mặc định AP mode: http://192.168.4.1
+            Mặc định AP mode: http://172.20.10.9
           </div>
         </div>
 

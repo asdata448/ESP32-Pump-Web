@@ -4,8 +4,8 @@ const TIMEOUT = 3000 // 3 second timeout
 
 // Get base URL from localStorage or use default
 export function getBaseUrl(): string {
-  if (typeof window === 'undefined') return 'http://192.168.4.1'
-  return localStorage.getItem('esp32_base_url') || 'http://192.168.4.1'
+  if (typeof window === 'undefined') return 'http://172.20.10.9'
+  return localStorage.getItem('esp32_base_url') || 'http://172.20.10.9'
 }
 
 export function setBaseUrl(url: string): void {

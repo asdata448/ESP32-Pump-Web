@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 Pump - Test Kết Nối</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #4dd9f0;
+    }
+    .card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .input-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #4dd9f0;
+      font-size: 14px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 16px;
+    }
+    input:focus {
+      outline: none;
+      border-color: #4dd9f0;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+    }
+    .btn-test {
+      background: #f50;
+      color: #fff;
+    }
+    .btn-test:hover {
+      background: #e04000;
+      transform: translateY(-2px);
+    }
+    .btn-test:disabled {
+      background: #666;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .status {
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 15px;
+      font-size: 14px;
+    }
+    .status.success {
+      background: rgba(0,204,102,0.2);
+      border: 1px solid #00cc66;
+    }
+    .status.error {
+      background: rgba(239,68,68,0.2);
+      border: 1px solid #ef4444;
+    }
+    .status.info {
+      background: rgba(77,217,240,0.2);
+      border: 1px solid #4dd9f0;
+    }
+    pre {
+      background: rgba(0,0,0,0.3);
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-right: 5px;
+    }
+    .badge.connected { background: #00cc66; }
+    .badge.disconnected { background: #ef4444; }
+    .help {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.6;
+    }
+    .help code {
+      background: rgba(255,255,255,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 ESP32 Pump - Test Kết Nối</h1>
+
+    <div class="card">
+      <h2 style="margin-bottom:15px;color:#4dd9f0">⚙️ Cấu hình</h2>
+      <div class="input-group">
+        <label for="esp32-ip">Địa chỉ IP ESP32:</label>
+        <input
+          type="text"
+          id="esp32-ip"
+          value="172.20.10.9"
+          placeholder="172.20.10.9"
+        />
+      </div>
+      <button class="btn-test" onclick="testConnection()">
+        🧪 TEST KẾT NỐI
+      </button>
+      <div id="status"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:15px;color:#4dd9f0">📊 Trạng thái ESP32</h2>
+      <div id="esp32-status">
+        <p class="help">Chưa kết nối. Nhấn TEST để lấy trạng thái.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:15px;color:#4dd9f0">📝 Hướng dẫn</h2>
+      <div class="help">
+        <p><strong>1. Xác định IP ESP32:</strong></p>
+        <ul style="margin-left:20px;margin-bottom:10px">
+          <li><strong>Chế độ AP (mặc định):</strong> <code>172.20.10.9</code></li>
+          <li><strong>Chế độ STA:</strong> Xem Serial Monitor Arduino IDE</li>
+        </ul>
+
+        <p><strong>2. Kết nối với ESP32:</strong></p>
+        <ul style="margin-left:20px;margin-bottom:10px">
+          <li>Nếu ESP32 ở chế độ AP → Kết nối WiFi "ESP32_Pump"</li>
+          <li>Nếu ESP32 ở chế độ STA → ESP32 và computer phải cùng mạng WiFi</li>
+        </ul>
+
+        <p><strong>3. Test kết nối:</strong></p>
+        <ul style="margin-left:20px;margin-bottom:10px">
+          <li>Nhấn nút <strong>TEST KẾT NỐI</strong></li>
+          <li>Nếu thành công → sẽ thấy trạng thái ESP32</li>
+          <li>Nếu lỗi → kiểm tra lại IP và kết nối mạng</li>
+        </ul>
+
+        <p><strong>4. Test các lệnh:</strong></p>
+        <ul style="margin-left:20px;margin-bottom:10px">
+          <li>Sau khi kết nối thành công, có thể test các lệnh</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:15px;color:#4dd9f0">🎮 Test Lệnh</h2>
+      <button class="btn-test" onclick="sendCommand('prepare')" style="background:#0891b2">
+        🔧 PREPARE (Chuẩn bị)
+      </button>
+      <button class="btn-test" onclick="sendCommand('start')" style="background:#0891b2">
+        ▶️ START (Bắt đầu)
+      </button>
+      <button class="btn-test" onclick="sendCommand('pause')" style="background:#0891b2">
+        ⏸️ PAUSE (Tạm dừng)
+      </button>
+      <button class="btn-test" onclick="sendCommand('resume')" style="background:#0891b2">
+        ▶️ RESUME (Tiếp tục)
+      </button>
+      <button class="btn-test" onclick="sendCommand('stop')" style="background:#dc2626">
+        ⏹️ STOP (Dừng)
+      </button>
+      <div id="command-status"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:15px;color:#4dd9f0">📋 Console Log</h2>
+      <pre id="console-log">// Console log sẽ hiện ở đây...</pre>
+    </div>
+  </div>
+
+  <script>
+    let esp32Ip = '172.20.10.9';
+    const statusEl = document.getElementById('status');
+    const esp32StatusEl = document.getElementById('esp32-status');
+    const commandStatusEl = document.getElementById('command-status');
+    const consoleLogEl = document.getElementById('console-log');
+    const ipInput = document.getElementById('esp32-ip');
+
+    // Log to console element
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString('vi-VN');
+      const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+      consoleLogEl.textContent = `${icon} [${timestamp}] ${message}\n` + consoleLogEl.textContent;
+    }
+
+    // Update IP when input changes
+    ipInput.addEventListener('change', (e) => {
+      esp32Ip = e.target.value;
+      log(`Đã thay đổi IP thành: ${esp32Ip}`);
+    });
+
+    // Test ESP32 connection
+    async function testConnection() {
+      statusEl.innerHTML = '<div class="status info">🔄 Đang kết nối...</div>';
+      log(`Bắt đầu test kết nối đến ${esp32Ip}...`);
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const response = await fetch(`http://${esp32Ip}/api/status`, {
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        statusEl.innerHTML = `
+          <div class="status success">
+            ✅ KẾT NỐI THÀNH CÔNG!
+            <br>Thời gian phản hồi: < 5000ms
+          </div>
+        `;
+        log(`Kết nối thành công!`, 'success');
+
+        // Display ESP32 status
+        displayESP32Status(data);
+
+      } catch (error) {
+        let errorMsg = 'Không biết lỗi';
+        if (error.name === 'AbortError') {
+          errorMsg = 'Hết thời gian kết nối (timeout)';
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMsg = 'Không tìm thấy thiết bị - Kiểm tra IP và kết nối mạng';
+        } else {
+          errorMsg = error.message;
+        }
+
+        statusEl.innerHTML = `
+          <div class="status error">
+            ❌ KẾT NỐI THẤT BẠI!
+            <br>Lỗi: ${errorMsg}
+          </div>
+        `;
+        log(`Kết nối thất bại: ${errorMsg}`, 'error');
+
+        esp32StatusEl.innerHTML = '<p class="help">Chưa kết nối được với ESP32.</p>';
+      }
+    }
+
+    // Display ESP32 status
+    function displayESP32Status(data) {
+      const stateBadges = {
+        'MAIN': '<span class="badge connected">MAIN</span>',
+        'READY': '<span class="badge connected">READY</span>',
+        'PREPARE': '<span class="badge" style="background:#f59e0b">PREPARE</span>',
+        'RESULT': '<span class="badge" style="background:#8b5cf6">RESULT</span>',
+        'DONE': '<span class="badge" style="background:#10b981">DONE</span>',
+        'ERROR': '<span class="badge" style="background:#ef4444">ERROR</span>'
+      };
+
+      esp32StatusEl.innerHTML = `
+        <div style="margin-bottom:10px">
+          ${stateBadges[data.state] || data.state}
+          <span style="color:#4dd9f0;font-size:14px">${data.state}</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+          <div>
+            <strong>Ống tiêm:</strong> ${data.syringe}<br>
+            <strong>Tốc độ:</strong> ${data.speed_mlh} ml/h<br>
+            <strong>Thể tích:</strong> ${data.volume_ml} ml
+          </div>
+          <div>
+            <strong>Đã truyền:</strong> ${data.steps_completed}/${data.steps_total} steps<br>
+            <strong>Còn lại:</strong> ${data.remaining_sec}s<br>
+            <strong>Homed:</strong> ${data.homed ? '✅' : '❌'}
+          </div>
+        </div>
+
+        <div style="margin-top:10px;font-size:13px">
+          <strong>Trạng thái:</strong><br>
+          Pump: ${data.pump_running ? '▶️ Đang chạy' : '⏹️ Dừng'} |
+          Paused: ${data.paused ? '⏸️ Có' : '❌ Không'} |
+          Contact: ${data.contact_found ? '✅ Có' : '❌ Không'}
+        </div>
+
+        <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,0.6)">
+          <strong>WiFi:</strong> ${data.wifi_mode} | <strong>IP:</strong> ${data.ip}
+        </div>
+      `;
+
+      log(`Đã nhận trạng thái: ${data.state}, Pump: ${data.pump_running ? 'Running' : 'Stopped'}`);
+    }
+
+    // Send command to ESP32
+    async function sendCommand(command) {
+      commandStatusEl.innerHTML = '<div class="status info">🔄 Đang gửi lệnh...</div>';
+      log(`Gửi lệnh: ${command.toUpperCase()}`);
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const response = await fetch(`http://${esp32Ip}/api/${command}`, {
+          method: 'POST',
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        commandStatusEl.innerHTML = `
+          <div class="status success">
+            ✅ Lệnh ${command.toUpperCase()} thành công!
+          </div>
+        `;
+        log(`Lệnh ${command.toUpperCase()} thành công!`, 'success');
+
+        // Refresh status after command
+        setTimeout(testConnection, 500);
+
+      } catch (error) {
+        let errorMsg = error.message || 'Lỗi không xác định';
+        commandStatusEl.innerHTML = `
+          <div class="status error">
+            ❌ Lệnh ${command.toUpperCase()} thất bại!
+            <br>Lỗi: ${errorMsg}
+          </div>
+        `;
+        log(`Lệnh ${command.toUpperCase()} thất bại: ${errorMsg}`, 'error');
+      }
+    }
+
+    // Auto-test on page load
+    log('Trang đã load. Sẵn sàng test kết nối.');
+    log('IP mặc định: 172.20.10.9 (Chế độ AP)');
+  </script>
+</body>
+</html>

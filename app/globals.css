@@ -178,6 +178,30 @@
   cursor: not-allowed;
 }
 
+/* Nút nguy hiểm - đỏ cho STOP */
+.btn-danger {
+  background: #ef4444;
+  color: white;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ===== CẢNH BÁO ===== */
 
 .alert-warning {

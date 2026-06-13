@@ -50,7 +50,7 @@ export interface TrangThaiESP32 {
  * Cấu hình kết nối ESP32
  */
 export interface CauHinhKetNoi {
-  baseUrl: string                    // "http://192.168.4.1"
+  baseUrl: string                    // "http://172.20.10.9"
   daKetNoi: boolean
   dangKetNoi: boolean
   doTreMs: number | null
@@ -149,7 +149,7 @@ export const TRANG_THAI_ESP32_MAC_DINH: TrangThaiESP32 = {
   fsr_occlusion_threshold: 2000,
   limit_pressed: false,
   buzzer_on: false,
-  ip: '192.168.4.1',
+  ip: '172.20.10.9',
   wifi_mode: 'AP',
 }
 
@@ -157,7 +157,7 @@ export const TRANG_THAI_ESP32_MAC_DINH: TrangThaiESP32 = {
  * Cấu hình kết nối mặc định
  */
 export const CAU_HINH_KET_NOI_MAC_DINH: CauHinhKetNoi = {
-  baseUrl: 'http://192.168.4.1',
+  baseUrl: 'http://172.20.10.9',
   daKetNoi: false,
   dangKetNoi: false,
   doTreMs: null,

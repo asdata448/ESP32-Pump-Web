@@ -79,7 +79,7 @@ export function StateMachineTimeline({ currentState }: StateMachineTimelineProps
                 </div>
                 <span className="text-sm">{STATE_LABELS.ERROR}</span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">
-                  Hien tai
+                  Hiện tại
                 </span>
               </div>
             )}

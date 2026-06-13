@@ -21,6 +21,7 @@ import {
   History,
   Cloud,
   Lock,
+  Square,
 } from 'lucide-react'
 import { useESP32 } from '@/hooks/use-esp32-complete'
 import { TrangThaiESP32, MucNhatKy, MucLichSu } from '@/lib/esp32-types'
@@ -28,6 +29,7 @@ import { useFirebaseHistory } from '@/hooks/use-firebase-history'
 import { FirebaseHistoryPanel } from '@/components/firebase/firebase-history-panel'
 import { ProtocolSelectionDialog } from '@/components/esp32/protocol-selection-dialog'
 import { PROTOCOLS, type ProtocolId, type SyringeType } from '@/lib/pump-types'
+import { ControlsCard } from '@/components/pump/controls-card'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN APP COMPONENT - Toàn bộ logic trong 1 file
@@ -62,13 +64,12 @@ export default function App() {
   } = esp32
 
   // ===== STATE UI =====
-  const [diaChi, setDiaChi] = useState('192.168.4.1')
+  const [diaChi, setDiaChi] = useState('192.168.0.101')
   const [loi, setLoi] = useState<string | null>(null)
   const [connectionMode, setConnectionMode] = useState<'FIREBASE' | 'HTTP'>('FIREBASE')
   const [hienThiModalTocDo, setHienThiModalTocDo] = useState(false)
   const [hienThiModalTheTich, setHienThiModalTheTich] = useState(false)
   const [hienThiModalOng, setHienThiModalOng] = useState(false)
-  const [hienThiXacNhanDung, setHienThiXacNhanDung] = useState(false)
   const [hienThiModalHoanTat, setHienThiModalHoanTat] = useState(false)
   const [hienThiLichSuLocal, setHienThiLichSuLocal] = useState(false)
   const [thoiGianHienTai, setThoiGianHienTai] = useState('--:--')
@@ -87,6 +88,31 @@ export default function App() {
   const [hienThiProtocolSelect, setHienThiProtocolSelect] = useState(false)
   const [selectedProtocolId, setSelectedProtocolId] = useState<ProtocolId | null>(null)
   const [selectedProtocol, setSelectedProtocol] = useState<any>(null)
+
+  // ===== SYRINGE SELECTION PERSISTENCE (localStorage) =====
+  useEffect(() => {
+    // Load saved syringe preference on app startup
+    const savedSyringeIndex = localStorage.getItem('esp32_syringe_index')
+    const savedSpeed = localStorage.getItem('esp32_default_speed')
+    const savedVolume = localStorage.getItem('esp32_default_volume')
+
+    if (savedSyringeIndex !== null) {
+      const syringeIndex = parseInt(savedSyringeIndex, 10)
+      setChinhSuaSyringe(syringeIndex)
+      // Also load default speed/volume for this syringe
+      if (savedSpeed) setChinhSuaSpeed(parseFloat(savedSpeed))
+      if (savedVolume) setChinhSuaVolume(parseFloat(savedVolume))
+      console.log('📥 Loaded syringe preference:', { syringeIndex, savedSpeed, savedVolume })
+    }
+  }, [])
+
+  // Save syringe selection when changed
+  const luuSyringeVaoLocalStorage = (syringeIndex: number, speed?: number, volume?: number) => {
+    localStorage.setItem('esp32_syringe_index', syringeIndex.toString())
+    if (speed !== undefined) localStorage.setItem('esp32_default_speed', speed.toString())
+    if (volume !== undefined) localStorage.setItem('esp32_default_volume', volume.toString())
+    console.log('💾 Saved syringe preference:', { syringeIndex, speed, volume })
+  }
 
   // ===== HANDLERS =====
   const handleSelectProtocol = (
@@ -405,7 +431,7 @@ export default function App() {
                     type="text"
                     value={diaChi}
                     onChange={(e) => setDiaChi(e.target.value)}
-                    placeholder="192.168.4.1"
+                    placeholder="192.168.0.101"
                     className="w-full px-4 py-3 rounded-lg bg-[#162840] border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-[#4dd9f0]"
                   />
                 </div>
@@ -510,7 +536,7 @@ export default function App() {
 
             {/* Protocol Info */}
             <div className="flex items-center justify-between px-4 py-2 bg-white/5 rounded-lg">
-              <span className="param-label">Protocol</span>
+              <span className="param-label">Đối Tượng</span>
               <div className="flex items-center gap-2">
                 {selectedProtocol ? (
                   <>
@@ -536,7 +562,17 @@ export default function App() {
               {/* Tốc độ */}
               <button
                 onClick={() => setHienThiModalTocDo(true)}
-                className="data-grid-cell p-4 text-left hover:bg-white/5"
+                disabled={selectedProtocol?.fixedRate === true}
+                className={`data-grid-cell p-4 text-left ${
+                  selectedProtocol?.fixedRate === true
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'hover:bg-white/5'
+                }`}
+                title={
+                  selectedProtocol?.fixedRate === true
+                    ? 'Tốc độ đã được cố định theo đối tượng'
+                    : 'Chỉnh tốc độ'
+                }
               >
                 <div className="param-label mb-2">Tốc độ truyền</div>
                 <div className="flex items-baseline">
@@ -545,12 +581,27 @@ export default function App() {
                   </span>
                   <span className="value-unit">ml/h</span>
                 </div>
+                {selectedProtocol && !selectedProtocol.fixedRate && (
+                  <div className="text-xs text-white/40 mt-1">
+                    {selectedProtocol.minRate}-{selectedProtocol.maxRate} ml/h
+                  </div>
+                )}
               </button>
 
               {/* Thể tích */}
               <button
                 onClick={() => setHienThiModalTheTich(true)}
-                className="data-grid-cell p-4 text-left hover:bg-white/5"
+                disabled={selectedProtocol !== null}
+                className={`data-grid-cell p-4 text-left ${
+                  selectedProtocol !== null
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'hover:bg-white/5'
+                }`}
+                title={
+                  selectedProtocol !== null
+                    ? 'Thể tích đã được cố định theo đối tượng'
+                    : 'Chỉnh thể tích'
+                }
               >
                 <div className="param-label mb-2">Thể tích truyền</div>
                 <div className="flex items-baseline">
@@ -559,6 +610,11 @@ export default function App() {
                   </span>
                   <span className="value-unit">ml</span>
                 </div>
+                {selectedProtocol && (
+                  <div className="text-xs text-white/40 mt-1">
+                    {selectedProtocol.defaultVTBI} ml (cố định)
+                  </div>
+                )}
               </button>
 
               {/* Đã truyền */}
@@ -696,31 +752,112 @@ export default function App() {
           )}
 
           {/* NÚT HÀNH ĐỘNG */}
-          <div className="px-4 pb-4 grid grid-cols-3 gap-3">
-            <button
-              onClick={() => chuanBi()}
-              disabled={trangThaiESP32?.state === 'PREPARE' || !cauHinhKetNoi.daKetNoi}
-              className="btn-primary py-3 font-semibold"
-            >
-              {trangThaiESP32?.state === 'PREPARE' ? '...' : 'Chuẩn bị'}
-            </button>
+          <div className="px-4 pb-4 gap-3">
+            {/* Hàng 1: Chuẩn bị */}
+            <div className="grid grid-cols-1 gap-3">
+              <button
+                onClick={() => chuanBi()}
+                disabled={trangThaiESP32?.state === 'PREPARE' || !cauHinhKetNoi.daKetNoi}
+                className="btn-primary py-3 font-semibold"
+              >
+                {trangThaiESP32?.state === 'PREPARE' ? '...' : 'Chuẩn bị'}
+              </button>
+            </div>
 
-            <button
-              onClick={() => setHienThiXacNhanDung(true)}
-              className="btn-secondary py-3 flex items-center justify-center gap-2"
-            >
-              <Home className="w-4 h-4" />
-              <span>Về home</span>
-            </button>
+            {/* Hàng 2: Về home và Báo động */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => veHome()}
+                disabled={!cauHinhKetNoi.daKetNoi}
+                className="btn-secondary py-3 flex items-center justify-center gap-2"
+              >
+                <Home className="w-4 h-4" />
+                <span>Về home</span>
+              </button>
 
-            <button
-              onClick={() => xacNhanBaoDong()}
-              disabled={!trangThaiESP32?.fsr_alert && trangThaiESP32?.state !== 'ERROR'}
-              className="btn-secondary py-3 flex items-center justify-center gap-2"
-            >
-              <Bell className="w-4 h-4" />
-              <span>Báo động</span>
-            </button>
+              <button
+                onClick={() => xacNhanBaoDong()}
+                disabled={!trangThaiESP32?.fsr_alert && trangThaiESP32?.state !== 'ERROR'}
+                className="btn-secondary py-3 flex items-center justify-center gap-2"
+              >
+                <Bell className="w-4 h-4" />
+                <span>Báo động</span>
+              </button>
+            </div>
+          </div>
+
+          {/* NÚT ĐIỀU KHIỂN BƠM (RÕ RÀNG HƠN) */}
+          <div className="medical-card-inner mx-4 mb-4 p-4">
+            <div className="text-xs text-white/60 uppercase tracking-wide mb-3 text-center">
+              ĐIỀU KHIỂN BƠM
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Nút TIẾP TỤC - Active khi paused */}
+              <button
+                onClick={() => tiepTuc()}
+                disabled={!cauHinhKetNoi.daKetNoi || !trangThaiESP32?.paused}
+                className={`${
+                  trangThaiESP32?.paused
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-gray-500 text-white/30 cursor-not-allowed'
+                } py-4 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all`}
+                title="Tiếp tục bơm (sau khi tạm dừng)"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0110 9.87v4.263a1 1 0 01-1.53.843l-3.198-2.132a1 1 0 01-.26-1.431l7.268-7.268a1 1 0 011.415-.261l7.268 7.267a1 1 0 01-.261 1.432l-3.197 2.132a1 1 0 01-1.533.842V9.87a1 1 0 01-1-1.27z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+                <span className="text-lg">TIẾP TỤC</span>
+              </button>
+
+              {/* Nút DỪNG LẠI - Active khi pump_running */}
+              <button
+                onClick={() => dungBom()}
+                disabled={!cauHinhKetNoi.daKetNoi || !trangThaiESP32?.pump_running}
+                className={`${
+                  trangThaiESP32?.pump_running
+                    ? 'btn-danger'
+                    : 'bg-gray-500 text-white/30 cursor-not-allowed'
+                } py-4 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all`}
+                title="Dừng bơm hoàn toàn"
+              >
+                <Square className="w-5 h-5" />
+                <span className="text-lg">DỪNG LẠI</span>
+              </button>
+            </div>
+
+            {/* Trạng thái */}
+            <div className="mt-3 text-center text-sm">
+              {trangThaiESP32?.state === 'HOMING' ? (
+                <div className="flex items-center justify-center gap-2 text-orange-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12h2m0 0v2m0 2v2m0-2h2m0 0v-2m0 2h2m-7-2h14" />
+                  </svg>
+                  <span>Đang quay về home - Nhấn DỪNG LẠI để dừng</span>
+                </div>
+              ) : trangThaiESP32?.paused ? (
+                <div className="flex items-center justify-center gap-2 text-yellow-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Đang tạm dừng - Nhấn TIẾP TỤC để tiếp tục</span>
+                </div>
+              ) : trangThaiESP32?.pump_running ? (
+                <div className="flex items-center justify-center gap-2 text-[#00cc66]">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>Đang bơm - Nhấn TẠM DỪNG (bảng điều khiển) hoặc DỪNG LẠI</span>
+                </div>
+              ) : trangThaiESP32?.state === 'READY' ? (
+                <div className="flex items-center justify-center gap-2 text-[#4dd9f0]">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Sẵn sàng - Nhấn BẮT ĐẦU (bảng điều khiển) để bắt đầu</span>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           {/* NÚT LƯU VÀO FIREBASE */}
@@ -933,8 +1070,8 @@ export default function App() {
           tieuDe="Tốc độ truyền"
           giaTri={trangThaiESP32?.speed_mlh || 1}
           donVi="ml/h"
-          min={0.1}
-          max={trangThaiESP32?.syringe_index === 0 ? 60 : 120}
+          min={selectedProtocol ? selectedProtocol.minRate : 0.1}
+          max={selectedProtocol ? selectedProtocol.maxRate : (trangThaiESP32?.syringe_index === 0 ? 300 : 600)}
           buoc={0.1}
           onXacNhan={(v) => {
             capNhatCauHinh(
@@ -988,41 +1125,6 @@ export default function App() {
         selectedSyringe={trangThaiESP32?.syringe === '10CC' ? '10CC' : '20CC'}
         onSelectProtocol={handleSelectProtocol}
       />
-
-      {/* XÁC NHẬN DỪNG */}
-      {hienThiXacNhanDung && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
-          <div className="modal-content w-full max-w-sm p-6">
-            <h3 className="text-lg font-semibold text-white mb-4">
-              {trangThaiESP32?.pump_running ? 'Tạm dừng bơm?' : 'Về trang chủ?'}
-            </h3>
-            <p className="text-sm text-white/70 mb-4">
-              {trangThaiESP32?.pump_running ? 'Bơm sẽ tạm dừng, bạn có thể tiếp tục sau.' : 'Máy bơm sẽ về vị trí ban đầu.'}
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  if (trangThaiESP32?.pump_running) {
-                    tamDung()
-                  } else {
-                    veHome()
-                  }
-                  setHienThiXacNhanDung(false)
-                }}
-                className="flex-1 btn-primary py-2"
-              >
-                Có
-              </button>
-              <button
-                onClick={() => setHienThiXacNhanDung(false)}
-                className="flex-1 btn-secondary py-2"
-              >
-                Không
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* MODAL HOÀN TẤT */}
       {hienThiModalHoanTat && (
@@ -1234,6 +1336,7 @@ export default function App() {
                 onClick={async () => {
                   try {
                     await capNhatCauHinh(chinhSuaSyringe, chinhSuaSpeed, chinhSuaVolume)
+                    luuSyringeVaoLocalStorage(chinhSuaSyringe, chinhSuaSpeed, chinhSuaVolume)
                     setHienThiManHinhChinhSua(false)
                     themLog('thanh_cong', 'Đã lưu cấu hình')
                   } catch (err) {
@@ -1265,7 +1368,9 @@ export default function App() {
                   <button
                     onClick={() => {
                       setChinhSuaSyringe(0)
+                      luuSyringeVaoLocalStorage(0)
                       setHienThiModalOng(false)
+                      themLog('thong_tin', 'Đã chọn ống tiêm 10CC')
                     }}
                     className={`w-full p-3 rounded text-left font-medium transition ${
                       chinhSuaSyringe === 0 ? 'bg-[#4dd9f0]/20 text-[#4dd9f0]' : 'bg-white/5 text-white hover:bg-white/10'
@@ -1276,7 +1381,9 @@ export default function App() {
                   <button
                     onClick={() => {
                       setChinhSuaSyringe(1)
+                      luuSyringeVaoLocalStorage(1)
                       setHienThiModalOng(false)
+                      themLog('thong_tin', 'Đã chọn ống tiêm 20CC')
                     }}
                     className={`w-full p-3 rounded text-left font-medium transition ${
                       chinhSuaSyringe === 1 ? 'bg-[#4dd9f0]/20 text-[#4dd9f0]' : 'bg-white/5 text-white hover:bg-white/10'

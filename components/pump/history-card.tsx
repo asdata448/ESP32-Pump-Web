@@ -16,12 +16,12 @@ export function HistoryCard({ history }: HistoryCardProps) {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <History className="h-5 w-5" />
-            Lich su (5 lan gan nhat)
+            Lịch sử (5 lần gần nhất)
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground text-center py-6">
-            Chua co lich su bom
+            Chưa có lịch sử bơm
           </p>
         </CardContent>
       </Card>
@@ -33,7 +33,7 @@ export function HistoryCard({ history }: HistoryCardProps) {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
           <History className="h-5 w-5" />
-          Lich su (5 lan gan nhat)
+          Lịch sử (5 lần gần nhất)
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -44,7 +44,7 @@ export function HistoryCard({ history }: HistoryCardProps) {
               className="rounded-lg bg-muted p-3 space-y-2"
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Lan {index + 1}</span>
+                <span className="text-sm font-medium">Lần {index + 1}</span>
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Syringe className="h-3 w-3" />
                   {entry.syringe}

@@ -24,7 +24,7 @@ export function ConnectionSettings({
   onDisconnect,
   onTest,
 }: ConnectionSettingsProps) {
-  const [url, setUrl] = useState(baseUrl || 'http://192.168.4.1')
+  const [url, setUrl] = useState(baseUrl || 'http://172.20.10.9')
   const [isTesting, setIsTesting] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
   const [testResult, setTestResult] = useState<boolean | null>(null)
@@ -80,7 +80,7 @@ export function ConnectionSettings({
       <CardContent className="space-y-4">
         <div className="flex gap-2">
           <Input
-            placeholder="http://192.168.4.1"
+            placeholder="http://172.20.10.9"
             value={url}
             onChange={(e) => {
               setUrl(e.target.value)
@@ -146,7 +146,7 @@ export function ConnectionSettings({
           <p className="font-medium mb-1">Hướng dẫn:</p>
           <ul className="list-disc list-inside space-y-1 text-xs">
             <li>Kết nối điện thoại/máy tính vào WiFi của ESP32</li>
-            <li>Mặc định IP là 192.168.4.1 khi ở chế độ AP</li>
+            <li>Mặc định IP là 172.20.10.9 khi ở chế độ AP</li>
             <li>Nếu ESP32 kết nối vào WiFi nhà, sử dụng IP được cấp</li>
           </ul>
         </div>

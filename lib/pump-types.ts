@@ -9,6 +9,7 @@ export type PumpState =
   | 'PREPARE'
   | 'READY'
   | 'RESULT'
+  | 'HOMING'
   | 'ERROR'
   | 'DONE'
 
@@ -34,6 +35,7 @@ export const STATE_LABELS: Record<PumpState, string> = {
   PREPARE: 'Chuẩn bị',
   READY: 'Sẵn sàng',
   RESULT: 'Đang chạy',
+  HOMING: 'Đang về home',
   ERROR: 'Lỗi',
   DONE: 'Hoàn thành',
 }
@@ -69,14 +71,15 @@ export type ProtocolId =
 
 export interface InfusionProtocol {
   id: ProtocolId
-  displayName: string      // Full protocol name
+  displayName: string      // Full protocol name (Đối tượng)
   shortName: string        // Short display name
   syringeIndex: number     // 0=10CC, 1=20CC
   defaultRate: number      // Default infusion rate (ml/h)
   minRate: number         // Minimum rate (ml/h)
   maxRate: number         // Maximum rate (ml/h)
   defaultVTBI: number     // Default Volume To Be Infused (ml)
-  fixedRate: boolean      // If true, rate cannot be changed
+  fixedRate: boolean      // If true, rate cannot be changed (single value)
+  disableEditing: boolean // If true, ALL parameters locked except speed (for range protocols)
   description: string     // Human-readable description (duration, etc.)
 }
 
@@ -84,121 +87,131 @@ export const PROTOCOLS: InfusionProtocol[] = [
   {
     id: 'ADULT_ACUTE_SLOW',
     displayName: 'Người lớn đau cấp',
-    shortName: 'Đau cấp 10mL',
+    shortName: 'Người lớn đau cấp',
     syringeIndex: 0,
     defaultRate: 1.0,
     minRate: 1.0,
     maxRate: 5.0,
     defaultVTBI: 10,
     fixedRate: false,
+    disableEditing: true, // Only speed editable within range
     description: '~10 giờ'
   },
   {
     id: 'ADULT_ACUTE_AVG',
     displayName: 'Người lớn đau cấp',
-    shortName: 'Đau cấp 20mL',
+    shortName: 'Người lớn đau cấp',
     syringeIndex: 1,
     defaultRate: 2.0,
     minRate: 1.0,
     maxRate: 15.0,
     defaultVTBI: 20,
     fixedRate: false,
+    disableEditing: true, // Only speed editable within range
     description: '~10 giờ'
   },
   {
     id: 'ICU_VENT_SLOW',
     displayName: 'ICU người lớn thở máy',
-    shortName: 'ICU thở máy 3.5',
+    shortName: 'ICU người lớn thở máy',
     syringeIndex: 1,
     defaultRate: 3.5,
     minRate: 2.1,
     maxRate: 28.0,
     defaultVTBI: 20,
     fixedRate: false,
+    disableEditing: true, // Only speed editable within range
     description: '~5h 43m'
   },
   {
     id: 'ICU_VENT_FAST',
     displayName: 'ICU người lớn thở máy',
-    shortName: 'ICU thở máy 7.0',
+    shortName: 'ICU người lớn thở máy',
     syringeIndex: 1,
     defaultRate: 7.0,
     minRate: 2.1,
     maxRate: 28.0,
     defaultVTBI: 20,
     fixedRate: false,
+    disableEditing: true, // Only speed editable within range
     description: '~2h 51m'
   },
   {
     id: 'ICU_SHOCK_SLOW',
     displayName: 'ICU sốc người lớn',
-    shortName: 'ICU sốc 2.6',
+    shortName: 'ICU sốc người lớn',
     syringeIndex: 1,
     defaultRate: 2.6,
     minRate: 0.5,
     maxRate: 21.0,
     defaultVTBI: 20,
     fixedRate: false,
+    disableEditing: true, // Only speed editable within range
     description: '~7h 41m'
   },
   {
     id: 'ICU_SHOCK_AVG',
     displayName: 'ICU sốc người lớn',
-    shortName: 'ICU sốc 5.0',
+    shortName: 'ICU sốc người lớn',
     syringeIndex: 1,
     defaultRate: 5.0,
     minRate: 0.5,
     maxRate: 21.0,
     defaultVTBI: 20,
     fixedRate: false,
+    disableEditing: true, // Only speed editable within range
     description: '~4 giờ'
   },
   {
     id: 'PEDIATRIC_10CC',
-    displayName: 'Nhi khoa/kháng sinh',
-    shortName: 'Nhi khoa 10mL',
+    displayName: 'Nhi khoa/kháng sinh ngắt quãng',
+    shortName: 'Nhi khoa/Kháng sinh',
     syringeIndex: 0,
     defaultRate: 10.0,
     minRate: 10.0,
     maxRate: 10.0,
     defaultVTBI: 10,
     fixedRate: true,
+    disableEditing: true, // All parameters locked
     description: '~60 phút'
   },
   {
     id: 'PEDIATRIC_20CC',
-    displayName: 'Nhi khoa/kháng sinh',
-    shortName: 'Nhi khoa 20mL',
+    displayName: 'Nhi khoa/kháng sinh ngắt quãng',
+    shortName: 'Nhi khoa/Kháng sinh',
     syringeIndex: 1,
     defaultRate: 20.0,
     minRate: 20.0,
     maxRate: 20.0,
     defaultVTBI: 20,
     fixedRate: true,
+    disableEditing: true, // All parameters locked
     description: '~60 phút'
   },
   {
     id: 'NEONATAL_NICU',
     displayName: 'Sơ sinh/NICU',
-    shortName: 'Sơ sinh NICU',
+    shortName: 'Sơ sinh/NICU',
     syringeIndex: 0,
     defaultRate: 1.8,
     minRate: 1.2,
     maxRate: 2.4,
     defaultVTBI: 10,
     fixedRate: false,
+    disableEditing: true, // Only speed editable within range
     description: '~5h 33m'
   },
   {
     id: 'POST_OP_PCA',
-    displayName: 'Sau mổ/PCA',
-    shortName: 'PCA mô phỏng',
+    displayName: 'Sau mổ/PCA mô phỏng',
+    shortName: 'Sau mổ/PCA mô phỏng',
     syringeIndex: 0,
     defaultRate: 60.0,
     minRate: 30.0,
     maxRate: 60.0,
     defaultVTBI: 1,
     fixedRate: false,
+    disableEditing: true, // Only speed editable within range
     description: '~1 phút'
   }
 ]
@@ -323,7 +336,7 @@ export const DEFAULT_STATUS: PumpStatus = {
   fsr_occlusion_threshold: 2000,
   limit_pressed: false,
   buzzer_on: false,
-  ip: '192.168.4.1',
+  ip: '172.20.10.9',
   wifi_mode: 'AP',
 }
 
