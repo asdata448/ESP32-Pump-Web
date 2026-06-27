@@ -1,17 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Play, Pause, Home, ArrowLeft, Bell, RotateCcw, AlertTriangle, ChevronRight, Clock } from 'lucide-react'
+import { Play, Pause, Home, ArrowLeft, Bell, RotateCcw, AlertTriangle, ChevronRight, Clock, User } from 'lucide-react'
 import type { PumpStatus, HistoryEntry } from '@/lib/pump-types'
-import { 
-  SYRINGE_SPECS, 
-  calculateProgress, 
-  calculateInfusedVolume 
+import {
+  SYRINGE_SPECS,
+  calculateProgress,
+  calculateInfusedVolume
 } from '@/lib/pump-types'
+import type { Patient } from '@/components/patients/patient-info-card'
 
 interface ControlPanelProps {
   status: PumpStatus
   history: HistoryEntry[]
+  patient?: Patient | null
   onStart: () => void
   onPause: () => void
   onResume: () => void
@@ -21,9 +23,10 @@ interface ControlPanelProps {
   onBack: () => void
 }
 
-export function ControlPanel({ 
-  status, 
+export function ControlPanel({
+  status,
   history,
+  patient,
   onStart,
   onPause,
   onResume,
@@ -69,6 +72,22 @@ export function ControlPanel({
 
   return (
     <div className="medical-panel p-4">
+      {/* Patient Info Header (if patient selected) */}
+      {patient && (
+        <div className="mb-4 p-3 rounded-lg bg-primary/10 border border-primary/30">
+          <div className="flex items-center gap-2 mb-2">
+            <User className="h-4 w-4 text-primary" />
+            <span className="text-sm font-semibold text-primary">Bệnh nhân</span>
+          </div>
+          <div className="text-sm text-white">
+            <div className="font-medium">{patient.fullName}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {patient.patientId} • {patient.gender === 'male' ? 'Nam' : 'Nữ'} • {patient.weight} kg
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Syringe Type Header */}
       <div className="syringe-header mb-4">
         <span className="text-sm text-muted-foreground">Ống: </span>

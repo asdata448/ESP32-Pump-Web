@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 // ═══════════════════════════════════════════════════════════════
 // TypeScript Types cho ESP32 Syringe Pump Control System
@@ -102,7 +102,7 @@ export interface TrangThaiUseESP32 {
   ngKetNoi: () => void
   capNhatCauHinh: (index: number, speed: number, volume: number) => Promise<void>
   chuanBi: () => Promise<void>
-  batDauBom: () => Promise<void>
+  batDauBom: (benhNhan?: { patientId?: string; fullName?: string }) => Promise<void>
   tamDung: () => Promise<void>
   tiepTuc: () => Promise<void>
   dungBom: () => Promise<void>

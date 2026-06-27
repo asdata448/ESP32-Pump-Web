@@ -1,12 +1,14 @@
 'use client'
 
-import { Activity, Home, Hand, AlertTriangle, Play, Pause } from 'lucide-react'
+import { Activity, Home, Hand, AlertTriangle, Play, Pause, User } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { PumpStatus } from '@/lib/pump-types'
 import { STATE_LABELS, getStateColor, getStateBgColor } from '@/lib/pump-types'
+import type { Patient } from '@/components/patients/patient-info-card'
 
 interface StatusCardProps {
   status: PumpStatus
+  patient?: Patient | null
 }
 
 function StatusItem({ 
@@ -39,14 +41,22 @@ function StatusItem({
   )
 }
 
-export function StatusCard({ status }: StatusCardProps) {
+export function StatusCard({ status, patient }: StatusCardProps) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Activity className="h-5 w-5" />
-          Trạng thái hệ thống
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Activity className="h-5 w-5" />
+            Trạng thái hệ thống
+          </CardTitle>
+          {patient && (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-primary/10 border border-primary/30">
+              <User className="h-3 w-3 text-primary" />
+              <span className="text-xs font-mono text-primary">{patient.patientId}</span>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-1">
         {/* Current State */}

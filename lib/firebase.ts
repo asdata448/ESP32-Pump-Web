@@ -1,4 +1,4 @@
-import { initializeApp, getApps, FirebaseApp } from 'firebase/app'
+﻿import { initializeApp, getApps, FirebaseApp } from 'firebase/app'
 import {
   getFirestore,
   collection,
@@ -88,6 +88,9 @@ export interface PumpHistoryRecord {
   dataSource: 'demo' | 'real'
   // NEW: Sequential record number
   recordNumber?: number
+  // NEW: Patient linkage — pump record tagged with patient code
+  patientId?: string
+  patientName?: string
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -106,26 +109,36 @@ export async function savePumpHistory(
 
     console.log('[Firebase] Saving pump history:', record)
 
-    // Tạo recordNumber có thứ tự
-    const today = new Date()
-    const dateStr = today.toISOString().split('T')[0] // YYYY-MM-DD
+    // Tạo document ID + số thứ tự
+    let docId: string
+    let recordNumber: number
 
-    // Query đếm records của hôm nay để tạo số thứ tự
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
+    if (record.patientId) {
+      // CÓ mã bệnh nhân: document ID theo mã bệnh nhân + số thứ tự
+      // VD: BN-260609-1234-001, BN-260609-1234-002 ... (gom nhóm theo bệnh nhân, không ghi đè)
+      const patientQ = query(
+        collection(db, 'pump_history'),
+        where('patientId', '==', record.patientId)
+      )
+      const patientSnap = await getDocs(patientQ)
+      recordNumber = patientSnap.size + 1
+      docId = `${record.patientId}-${String(recordNumber).padStart(3, '0')}`
+    } else {
+      // KHÔNG có mã bệnh nhân: giữ format cũ YYYY-MM-DD-NNN
+      const today = new Date()
+      const dateStr = today.toISOString().split('T')[0] // YYYY-MM-DD
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1)
 
-    const q = query(
-      collection(db, 'pump_history'),
-      where('timestamp', '>=', Timestamp.fromDate(startOfDay)),
-      where('timestamp', '<', Timestamp.fromDate(endOfDay))
-    )
-
-    const snapshot = await getDocs(q)
-    const count = snapshot.size
-    const recordNumber = count + 1
-
-    // Tạo ID document có thứ tự: YYYY-MM-DD-序号
-    const docId = `${dateStr}-${String(recordNumber).padStart(3, '0')}` // Ví dụ: 2026-04-30-001
+      const q = query(
+        collection(db, 'pump_history'),
+        where('timestamp', '>=', Timestamp.fromDate(startOfDay)),
+        where('timestamp', '<', Timestamp.fromDate(endOfDay))
+      )
+      const snapshot = await getDocs(q)
+      recordNumber = snapshot.size + 1
+      docId = `${dateStr}-${String(recordNumber).padStart(3, '0')}` // Ví dụ: 2026-04-30-001
+    }
 
     // Lọc bỏ các field undefined/null (Firebase không chấp nhận undefined)
     const cleanData: Record<string, any> = {
@@ -241,6 +254,43 @@ export async function deleteAllPumpHistory(deviceId: string): Promise<boolean> {
   } catch (error) {
     console.error('[Firebase] Error deleting pump history:', error)
     return false
+  }
+}
+
+/**
+ * Lấy lịch sử bơm theo MÃ BỆNH NHÂN (patientId)
+ * pump_history records đã được gắn patientId khi lưu.
+ *
+ * Yêu cầu composite index: patientId (asc) + timestamp (desc).
+ * Nếu Firestore báo thiếu index, tạo theo link trong thông báo lỗi.
+ */
+export async function getPumpHistoryByPatient(
+  patientId: string,
+  limitCount: number = 50
+): Promise<PumpHistoryRecord[]> {
+  try {
+    const db = getFirestoreDB()
+
+    const q = query(
+      collection(db, 'pump_history'),
+      where('patientId', '==', patientId),
+      orderBy('timestamp', 'desc'),
+      limit(limitCount)
+    )
+
+    const snapshot = await getDocs(q)
+    const records: PumpHistoryRecord[] = []
+    snapshot.forEach((d) => {
+      const data = d.data({ serverTimestamps: 'estimate' }) as any
+      records.push({ id: d.id, ...data })
+    })
+
+    console.log('[Firebase] Patient pump history for', patientId, ':', records.length, 'records')
+    return records
+  } catch (error) {
+    console.error('[Firebase] Error getting pump history by patient:', error)
+    // Re-throw so the API can surface the Firestore index error to the user if needed
+    throw error
   }
 }
 
@@ -597,6 +647,8 @@ export function createPumpHistoryRecord(data: {
   deviceId: string
   notes?: string
   errorType?: string
+  patientId?: string
+  patientName?: string
 }): Omit<PumpHistoryRecord, 'id' | 'timestamp' | 'createdAt'> {
   const cleanData: Omit<PumpHistoryRecord, 'id' | 'timestamp' | 'createdAt' | 'stepsCompleted' | 'stepsTotal'> = {
     syringeType: data.syringeType || '10CC',
@@ -620,6 +672,12 @@ export function createPumpHistoryRecord(data: {
   }
   if (data.errorType) {
     cleanData.errorType = data.errorType
+  }
+  if (data.patientId) {
+    cleanData.patientId = data.patientId
+  }
+  if (data.patientName) {
+    cleanData.patientName = data.patientName
   }
 
   return cleanData
@@ -659,6 +717,8 @@ export interface ESP32Command {
     syringe_index?: number
     speed_mlh?: number
     volume_ml?: number
+    patient_id?: string
+    patient_name?: string
   }
   timestamp?: number
 }

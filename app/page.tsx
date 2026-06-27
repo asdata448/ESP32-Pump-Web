@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
@@ -22,6 +22,13 @@ import {
   Cloud,
   Lock,
   Square,
+  UserPlus,
+  User,
+  Baby,
+  Settings,
+  Gauge,
+  Droplets,
+  Syringe,
 } from 'lucide-react'
 import { useESP32 } from '@/hooks/use-esp32-complete'
 import { TrangThaiESP32, MucNhatKy, MucLichSu } from '@/lib/esp32-types'
@@ -30,6 +37,12 @@ import { FirebaseHistoryPanel } from '@/components/firebase/firebase-history-pan
 import { ProtocolSelectionDialog } from '@/components/esp32/protocol-selection-dialog'
 import { PROTOCOLS, type ProtocolId, type SyringeType } from '@/lib/pump-types'
 import { ControlsCard } from '@/components/pump/controls-card'
+import { PatientRegistrationDialog, type PatientFormValues } from '@/components/patients/patient-registration-dialog'
+import { PatientSearchBar } from '@/components/patients/patient-search-bar'
+import { PatientInfoCard } from '@/components/patients/patient-info-card'
+import { PumpHistoryTable, type PumpHistoryEntry } from '@/components/patients/pump-history-table'
+import { IntroScreen } from '@/components/intro/intro-screen'
+import type { Patient } from '@/components/patients/patient-info-card'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN APP COMPONENT - Toàn bộ logic trong 1 file
@@ -64,9 +77,8 @@ export default function App() {
   } = esp32
 
   // ===== STATE UI =====
-  const [diaChi, setDiaChi] = useState('192.168.0.101')
+  const [diaChi, setDiaChi] = useState('172.20.10.9')
   const [loi, setLoi] = useState<string | null>(null)
-  const [connectionMode, setConnectionMode] = useState<'FIREBASE' | 'HTTP'>('FIREBASE')
   const [hienThiModalTocDo, setHienThiModalTocDo] = useState(false)
   const [hienThiModalTheTich, setHienThiModalTheTich] = useState(false)
   const [hienThiModalOng, setHienThiModalOng] = useState(false)
@@ -82,12 +94,23 @@ export default function App() {
   const [chinhSuaSyringe, setChinhSuaSyringe] = useState(0)
   const [chinhSuaSpeed, setChinhSuaSpeed] = useState(60)
   const [chinhSuaVolume, setChinhSuaVolume] = useState(5)
+  const [nhapTay, setNhapTay] = useState(false)
+  const [giaTriNhap, setGiaTriNhap] = useState<number>(0)
   const [prevContactFound, setPrevContactFound] = useState(false)
 
   // ===== PROTOCOL STATE =====
   const [hienThiProtocolSelect, setHienThiProtocolSelect] = useState(false)
   const [selectedProtocolId, setSelectedProtocolId] = useState<ProtocolId | null>(null)
   const [selectedProtocol, setSelectedProtocol] = useState<any>(null)
+
+  // ===== PATIENT MANAGEMENT STATE =====
+  const [hienThiDangKyBN, setHienThiDangKyBN] = useState(false)
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
+  const [hienThiTiemBenhNhan, setHienThiTiemBenhNhan] = useState(false)
+  const [patientSearchQuery, setPatientSearchQuery] = useState('')
+
+  // ===== INTRO STATE (hiện MỖI LẦN vào web) =====
+  const [introStage, setIntroStage] = useState(0) // 0=academic intro, 1=app
 
   // ===== SYRINGE SELECTION PERSISTENCE (localStorage) =====
   useEffect(() => {
@@ -141,6 +164,129 @@ export default function App() {
   const openProtocolSelect = () => {
     setHienThiProtocolSelect(true)
   }
+
+  // ===== PATIENT MANAGEMENT HANDLERS =====
+  const handlePatientRegistration = (patientData: PatientFormValues & { patientId: string }) => {
+    // Convert Date -> YYYY-MM-DD string for the canonical Patient type
+    const dob = patientData.dateOfBirth
+    const dateOfBirthStr = `${dob.getFullYear()}-${String(dob.getMonth() + 1).padStart(2, '0')}-${String(dob.getDate()).padStart(2, '0')}`
+
+    // Create patient object
+    const patient: Patient = {
+      id: patientData.patientId,
+      patientId: patientData.patientId,
+      fullName: patientData.fullName,
+      dateOfBirth: dateOfBirthStr,
+      gender: patientData.gender,
+      weight: patientData.weight,
+      createdAt: new Date().toISOString(),
+    }
+
+    setSelectedPatient(patient)
+    themLog('thanh_cong', `Đã đăng ký bệnh nhân: ${patient.fullName} (${patient.patientId})`)
+
+    // Auto-start pump session with this patient
+    // Patient selection flow continues to pump setup
+  }
+
+  const handlePatientSelect = (patient: Patient) => {
+    setSelectedPatient(patient)
+    themLog('thong_tin', `Đã chọn bệnh nhân: ${patient.fullName} (${patient.patientId})`)
+    setHienThiTiemBenhNhan(false)
+  }
+
+  const handleClearPatient = () => {
+    setSelectedPatient(null)
+    themLog('thong_tin', 'Đã xóa chọn bệnh nhân')
+  }
+
+  // ===== PATIENT SEARCH + PUMP HISTORY (real Firebase data) =====
+  const [patientPumpHistory, setPatientPumpHistory] = useState<PumpHistoryEntry[]>([])
+  const [dangTaiLichSuBN, setDangTaiLichSuBN] = useState(false)
+
+  // Convert a Firestore timestamp (serialized as {seconds, nanoseconds}) to JS Date
+  const tsToDate = (ts: any): Date => {
+    if (!ts) return new Date(0)
+    if (ts instanceof Date) return ts
+    if (typeof ts === 'number') return new Date(ts)
+    if (typeof ts === 'string') return new Date(ts)
+    if (typeof ts?.seconds === 'number') {
+      return new Date(ts.seconds * 1000 + (ts.nanoseconds || 0) / 1e6)
+    }
+    if (typeof ts?._seconds === 'number') {
+      return new Date(ts._seconds * 1000 + (ts._nanoseconds || 0) / 1e6)
+    }
+    return new Date(ts)
+  }
+
+  // Search patients via /api/patients/search
+  const searchPatients = useCallback(async (query: string) => {
+    const trimmed = query.trim()
+    if (!trimmed) return []
+    try {
+      const res = await fetch(`/api/patients/search?q=${encodeURIComponent(trimmed)}`)
+      const json = await res.json()
+      if (!json.success) return []
+      const results = json.data?.results || []
+      const q = trimmed.toLowerCase()
+      return results.map((r: any) => {
+        const patient: Patient = {
+          id: r.patientId,
+          patientId: r.patientId,
+          fullName: r.fullName,
+          dateOfBirth: r.dateOfBirth,
+          gender: r.gender,
+          weight: r.weight,
+        }
+        const matchFields: ('patientId' | 'fullName')[] = []
+        if (r.patientId?.toLowerCase().includes(q)) matchFields.push('patientId')
+        if (r.fullName?.toLowerCase().includes(q)) matchFields.push('fullName')
+        return { patient, matchScore: matchFields.length / 2, matchFields }
+      })
+    } catch (e) {
+      console.error('[Patient search] error:', e)
+      return []
+    }
+  }, [])
+
+  // Fetch a patient's pump history from pump_history (tagged by patientId)
+  const fetchPatientHistory = useCallback(async (patientId: string) => {
+    setDangTaiLichSuBN(true)
+    try {
+      const res = await fetch(`/api/patients/${patientId}/sessions?limit=50`)
+      const json = await res.json()
+      if (!json.success) {
+        setPatientPumpHistory([])
+        return
+      }
+      const sessions = (json.data?.sessions || []).map((s: any) => {
+        const start = tsToDate(s.timestamp)
+        const end = new Date(start.getTime() + (s.totalTimeSec || 0) * 1000)
+        return {
+          ...s,
+          timestamp: start,
+          startTime: start,
+          endTime: end,
+          patientId: s.patientId || s.deviceId,
+        } as PumpHistoryEntry
+      })
+      setPatientPumpHistory(sessions)
+    } catch (e) {
+      console.error('[Patient history] error:', e)
+      setPatientPumpHistory([])
+    } finally {
+      setDangTaiLichSuBN(false)
+    }
+  }, [])
+
+  // Load history whenever a patient is selected
+  useEffect(() => {
+    if (selectedPatient) {
+      fetchPatientHistory(selectedPatient.patientId)
+    } else {
+      setPatientPumpHistory([])
+    }
+  }, [selectedPatient, fetchPatientHistory])
 
   // ===== FIREBASE STATE =====
   const [hienThiLichSuFirebase, setHienThiLichSuFirebase] = useState(false)
@@ -260,6 +406,9 @@ export default function App() {
         body: JSON.stringify({
           deviceId: deviceId,
           overrideData: trangThaiESP32,
+          // Tag this pump record with the selected patient's code ("lưu ID bơm theo mã bệnh nhân")
+          patientId: selectedPatient?.patientId,
+          patientName: selectedPatient?.fullName,
         }),
       })
 
@@ -281,6 +430,25 @@ export default function App() {
     }
   }
 
+  // ===== TỰ LƯU PHIÊN BƠM VÀO FIREBASE KHI BƠM XONG (DONE) =====
+  // Đảm bảo mọi phiên bơm hoàn tất đều được lưu, kèm mã bệnh nhân đang chọn.
+  const daLuuKhiDoneRef = useRef(false)
+
+  useEffect(() => {
+    // Vừa chuyển sang DONE → lưu đúng 1 lần cho phiên này
+    if (trangThaiESP32?.state === 'DONE' && !daLuuKhiDoneRef.current) {
+      daLuuKhiDoneRef.current = true
+      if (cauHinhKetNoi.daKetNoi) {
+        themLog('thong_tin', 'Bơm xong — tự động lưu phiên vào Firebase theo mã bệnh nhân')
+        luuVaoFirebase()
+      }
+    }
+    // Khi rời khỏi DONE (bắt đầu phiên mới) → mở lại cờ để lần DONE tới được lưu
+    if (trangThaiESP32?.state !== 'DONE') {
+      daLuuKhiDoneRef.current = false
+    }
+  }, [trangThaiESP32?.state, cauHinhKetNoi.daKetNoi])
+
   // ===== TRỢ GIÚP TÍNH TOÁN =====
   const phanTramDaTruyen =
     trangThaiESP32 && trangThaiESP32.steps_total > 0
@@ -291,6 +459,20 @@ export default function App() {
     trangThaiESP32 && trangThaiESP32.steps_total > 0
       ? (phanTramDaTruyen / 100) * trangThaiESP32.volume_ml
       : 0
+
+  // Tính thời gian truyền dự kiến (phút) = thể tích / tốc độ * 60
+  const tinhThoiGian = (s: any): number => {
+    if (!s || !s.speed_mlh || s.speed_mlh <= 0) return 0
+    return ((s.volume_ml || 0) / s.speed_mlh) * 60
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INTRO / SPLASH — hiện MỖI LẦN vào web (kể cả refresh), bấm nút để vào app
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  if (introStage === 0) {
+    return <IntroScreen onEnter={() => setIntroStage(1)} />
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Nếu chưa kết nối → hiện màn hình kết nối WiFi
@@ -303,156 +485,77 @@ export default function App() {
           {/* CARD KẾT NỐI */}
           <div className="medical-card p-8">
             {/* HEADER */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-7">
               <div className="mb-4 flex justify-center">
-                <Wifi className="w-16 h-16 text-[#4dd9f0] animate-pulse" />
+                <div className="relative">
+                  <span
+                    className="absolute inset-0 rounded-full blur-lg"
+                    style={{ background: 'radial-gradient(circle, rgba(77,217,240,0.3), transparent 70%)' }}
+                    aria-hidden
+                  />
+                  <img
+                    src="/ute-logo.png"
+                    alt="Logo Trường ĐH Công nghệ Kỹ thuật TP.HCM"
+                    className="relative h-16 w-16 rounded-full object-cover"
+                    style={{
+                      border: '2px solid rgba(77,217,240,0.5)',
+                      boxShadow: '0 0 20px rgba(77,217,240,0.25)',
+                    }}
+                  />
+                </div>
               </div>
-              <h1 className="text-3xl font-bold text-white mb-2">
-                Kết nối ESP32
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-white/55 mb-1">
+                Khoa Điện — Điện tử · Kỹ thuật Y sinh
+              </p>
+              <h1 className="intro-title mb-2" style={{ fontSize: '1.9rem' }}>
+                MÁY BƠM TIÊM ĐIỆN
               </h1>
               <p className="text-sm text-white/60">
-                Chọn chế độ kết nối của bạn
+                Kết nối WiFi để bắt đầu
               </p>
             </div>
 
-            {/* CHỌN CHẾ ĐỘ KẾT NỐI */}
-            <div className="mb-6">
-              <label className="param-label block mb-3">Chế độ kết nối</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => {
-                    setConnectionMode('FIREBASE')
-                    setLoi(null)
-                  }}
-                  className={`p-4 rounded-lg border-2 transition ${
-                    connectionMode === 'FIREBASE'
-                      ? 'border-[#4dd9f0] bg-[#4dd9f0]/10'
-                      : 'border-white/20 bg-white/5 hover:bg-white/10'
-                  }`}
-                >
-                  <div className="text-center">
-                    <Cloud className="w-6 h-6 mx-auto mb-2 text-[#4dd9f0]" />
-                    <div className="text-white font-semibold text-sm mb-1">Firebase Cloud</div>
-                    <div className="text-white/50 text-xs">Kết nối từ bất kỳ đâu</div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => {
-                    setConnectionMode('HTTP')
-                    setLoi(null)
-                  }}
-                  className={`p-4 rounded-lg border-2 transition ${
-                    connectionMode === 'HTTP'
-                      ? 'border-[#4dd9f0] bg-[#4dd9f0]/10'
-                      : 'border-white/20 bg-white/5 hover:bg-white/10'
-                  }`}
-                >
-                  <div className="text-center">
-                    <Wifi className="w-6 h-6 mx-auto mb-2 text-[#4dd9f0]" />
-                    <div className="text-white font-semibold text-sm mb-1">WiFi Direct</div>
-                    <div className="text-white/50 text-xs">Cùng mạng với ESP32</div>
-                  </div>
-                </button>
-              </div>
+            {/* HƯỚNG DẪN HTTP */}
+            <details open className="mb-6">
+              <summary className="cursor-pointer text-white font-semibold mb-3 flex items-center gap-2">
+                <ChevronRight className="w-4 h-4" />
+                Hướng dẫn kết nối WiFi
+              </summary>
+              <ol className="text-sm text-white/70 space-y-2 ml-6 list-decimal">
+                <li>Cấp nguồn ESP32 — thiết bị sẽ tự kết nối vào mạng WiFi (đã cài sẵn trong firmware).</li>
+                <li>Đảm bảo máy tính / điện thoại của bạn đang ở <b>cùng một mạng WiFi</b> với ESP32.</li>
+                <li>Đọc địa chỉ IP của ESP32 hiển thị trên màn hình LCD của thiết bị.</li>
+                <li>Nhập địa chỉ IP đó vào ô bên dưới rồi bấm "KẾT NỐI WIFI".</li>
+              </ol>
+            </details>
+
+            {/* FORM INPUT */}
+            <div className="mb-4">
+              <label className="param-label block mb-2">Địa chỉ IP ESP32</label>
+              <input
+                type="text"
+                value={diaChi}
+                onChange={(e) => setDiaChi(e.target.value)}
+                placeholder="172.20.10.9"
+                className="w-full px-4 py-3 rounded-lg bg-[#162840] border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-[#4dd9f0]"
+              />
             </div>
 
-            {/* FIREBASE MODE */}
-            {connectionMode === 'FIREBASE' ? (
-              <>
-                {/* DEVICE INFO */}
-                {deviceIdFromHook ? (
-                  <div className="mb-4 p-4 rounded-lg bg-[#162840] border border-[#4dd9f0]/30">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Check className="w-4 h-4 text-[#00cc66]" />
-                      <span className="text-sm font-semibold text-white">Device ID</span>
-                    </div>
-                    <div className="text-xs text-white/70 font-mono break-all">
-                      {deviceIdFromHook}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mb-4 p-4 rounded-lg bg-yellow-500/15 border border-yellow-500/30">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0" />
-                      <span className="text-sm text-yellow-300">
-                        Đang tìm kiếm device... Hãy đảm bảo ESP32 đang kết nối WiFi
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* NÚT KẾT NỐI FIREBASE */}
-                <button
-                  onClick={async () => {
-                    setLoi(null)
-                    if (!deviceIdFromHook) {
-                      const detected = await tuongThichDeviceId()
-                      if (!detected) {
-                        setLoi('Không tìm thấy device. Hãy đảm bảo ESP32 đang kết nối WiFi')
-                        return
-                      }
-                    }
-                    await ketNoiFirebase()
-                    setCheDoKetNoi(true)
-                  }}
-                  disabled={dangKetNoiFirebase}
-                  className="w-full btn-primary py-3 mb-3 font-semibold"
-                >
-                  {dangKetNoiFirebase ? (
-                    <>
-                      <Activity className="inline w-4 h-4 mr-2 animate-spin" />
-                      Đang kết nối Firebase...
-                    </>
-                  ) : (
-                    'KẾT NỐI FIREBASE'
-                  )}
-                </button>
-              </>
-            ) : (
-              <>
-                {/* HƯỚNG DẪN HTTP */}
-                <details open className="mb-6">
-                  <summary className="cursor-pointer text-white font-semibold mb-3 flex items-center gap-2">
-                    <ChevronRight className="w-4 h-4" />
-                    Hướng dẫn kết nối WiFi
-                  </summary>
-                  <ol className="text-sm text-white/70 space-y-2 ml-6 list-decimal">
-                    <li>Vào Cài đặt WiFi trên điện thoại</li>
-                    <li>Chọn mạng "ESP32-PUMP"</li>
-                    <li>Nhập mật khẩu: 12345678</li>
-                    <li>Quay lại ứng dụng này</li>
-                  </ol>
-                </details>
-
-                {/* FORM INPUT */}
-                <div className="mb-4">
-                  <label className="param-label block mb-2">Địa chỉ IP ESP32</label>
-                  <input
-                    type="text"
-                    value={diaChi}
-                    onChange={(e) => setDiaChi(e.target.value)}
-                    placeholder="192.168.0.101"
-                    className="w-full px-4 py-3 rounded-lg bg-[#162840] border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-[#4dd9f0]"
-                  />
-                </div>
-
-                {/* NÚT KẾT NỐI HTTP */}
-                <button
-                  onClick={xuLyKetNoi}
-                  disabled={cauHinhKetNoi.dangKetNoi}
-                  className="w-full btn-primary py-3 mb-3 font-semibold"
-                >
-                  {cauHinhKetNoi.dangKetNoi ? (
-                    <>
-                      <Activity className="inline w-4 h-4 mr-2 animate-spin" />
-                      Đang kết nối...
-                    </>
-                  ) : (
-                    'KẾT NỐI WIFI'
-                  )}
-                </button>
-              </>
-            )}
+            {/* NÚT KẾT NỐI HTTP */}
+            <button
+              onClick={xuLyKetNoi}
+              disabled={cauHinhKetNoi.dangKetNoi}
+              className="w-full btn-primary py-3 mb-3 font-semibold"
+            >
+              {cauHinhKetNoi.dangKetNoi ? (
+                <>
+                  <Activity className="inline w-4 h-4 mr-2 animate-spin" />
+                  Đang kết nối...
+                </>
+              ) : (
+                'KẾT NỐI WIFI'
+              )}
+            </button>
 
             {/* HIỂN THỊ LỖI */}
             {loi && (
@@ -461,16 +564,6 @@ export default function App() {
                 <span className="text-sm text-red-300">{loi}</span>
               </div>
             )}
-
-            {/* NÚT DEMO */}
-            <button
-              onClick={() => {
-                window.location.href = '/demo'
-              }}
-              className="w-full px-4 py-3 rounded-lg border border-white/20 text-white font-medium hover:bg-white/5 transition"
-            >
-              Dùng thử Demo
-            </button>
           </div>
         </div>
       </div>
@@ -488,11 +581,20 @@ export default function App() {
         <div className="medical-card">
           {/* HEADER */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <img
+                src="/ute-logo.png"
+                alt="Logo Khoa Điện - Điện tử UTE"
+                className="h-9 w-9 rounded-full object-cover shrink-0"
+                style={{
+                  border: '1.5px solid rgba(77,217,240,0.45)',
+                  boxShadow: '0 0 12px rgba(77,217,240,0.2)',
+                }}
+              />
               {trangThaiESP32?.pump_running && !trangThaiESP32?.paused && (
-                <span className="w-2 h-2 rounded-full bg-[#00cc66] animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-[#00cc66] animate-pulse shrink-0" />
               )}
-              <h1 className="text-2xl font-bold text-[#4dd9f0]">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#4dd9f0] truncate">
                 {getTrangThaiText(trangThaiESP32)}
               </h1>
               {/* Connection Mode Badge */}
@@ -509,38 +611,142 @@ export default function App() {
                 </div>
               )}
             </div>
-            {cheDoKetNoi && (
-              <button
-                onClick={xuLyNgKetNoi}
-                className="px-3 py-1 rounded text-xs font-semibold bg-red-500/20 text-red-300 hover:bg-red-500/30"
-              >
-                Ngắt kết nối
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {cheDoKetNoi && (
+                <button
+                  onClick={xuLyNgKetNoi}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/15 text-red-300 hover:bg-red-500/25 border border-red-500/20 transition"
+                >
+                  Ngắt kết nối
+                </button>
+              )}
+            </div>
           </div>
 
+          {/* PATIENT INFO SECTION */}
+          {/* ===== KHỐI BỆNH NHÂN (thống nhất 2 trạng thái) ===== */}
+          {selectedPatient ? (
+            <div className="px-6 py-4 border-b border-white/10 bg-[#162840]/40 space-y-3">
+              {/* Hàng tiêu đề + nút đổi bệnh nhân */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-[#4dd9f0]" />
+                  <h3 className="text-sm font-bold text-white tracking-wide">BỆNH NHÂN</h3>
+                </div>
+                <button
+                  onClick={handleClearPatient}
+                  className="shrink-0 px-3 py-1.5 rounded-lg bg-white/5 text-white/70 hover:bg-white/10 border border-white/10 transition text-xs font-medium flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Đổi bệnh nhân
+                </button>
+              </div>
+
+              {/* Thẻ thông tin bệnh nhân (compact, đúng theme) */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-[#162840] border border-white/10">
+                <div className="w-11 h-11 rounded-full bg-[#4dd9f0]/15 border border-[#4dd9f0]/30 flex items-center justify-center shrink-0">
+                  <User className="w-5 h-5 text-[#4dd9f0]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="font-mono text-xs font-semibold text-[#4dd9f0] bg-[#4dd9f0]/10 px-2 py-0.5 rounded">
+                      {selectedPatient.patientId}
+                    </span>
+                  </div>
+                  <h4 className="text-white font-semibold truncate leading-tight">
+                    {selectedPatient.fullName}
+                  </h4>
+                  <p className="text-xs text-white/50 mt-0.5">
+                    {(() => {
+                      const d = selectedPatient.dateOfBirth ? new Date(selectedPatient.dateOfBirth) : null
+                      const tuoi = d ? new Date().getFullYear() - d.getFullYear() : '--'
+                      return `${tuoi} tuổi`
+                    })()}{' '}
+                    • {selectedPatient.gender === 'MALE' ? 'Nam' : 'Nữ'} • {selectedPatient.weight} kg
+                  </p>
+                </div>
+              </div>
+
+              {/* Tiêu đề lịch sử bơm */}
+              <div className="flex items-center gap-2 pt-1">
+                <History className="w-4 h-4 text-white/50" />
+                <h4 className="text-xs font-semibold text-white/60 tracking-wide uppercase">Lịch sử bơm</h4>
+              </div>
+
+              {/* Bảng lịch sử bơm của bệnh nhân này */}
+              <PumpHistoryTable
+                data={patientPumpHistory}
+                isLoading={dangTaiLichSuBN}
+                showFilters={false}
+                showExport={false}
+                pageSize={5}
+              />
+            </div>
+          ) : (
+            <div className="px-6 py-5 border-b border-white/10 bg-[#162840]/40">
+              {/* Hàng tiêu đề */}
+              <div className="flex items-center gap-2.5 mb-1">
+                <User className="w-4 h-4 text-[#4dd9f0]" />
+                <h3 className="text-sm font-bold text-white tracking-wide">BỆNH NHÂN</h3>
+              </div>
+              <p className="text-xs text-white/50 mb-3">
+                Tìm theo mã / tên hoặc tiếp nhận bệnh nhân mới để bắt đầu truyền
+              </p>
+
+              {/* Thanh tìm kiếm */}
+              <PatientSearchBar
+                onPatientSelect={handlePatientSelect}
+                onRegisterNew={() => setHienThiDangKyBN(true)}
+                searchFunction={searchPatients}
+                placeholder="Tìm theo mã hoặc tên..."
+                className="w-full"
+                showRegisterButton={false}
+              />
+
+              {/* Nút tiếp nhận bệnh nhân mới */}
+              <button
+                onClick={() => setHienThiDangKyBN(true)}
+                className="w-full btn-primary py-2.5 mt-3 flex items-center justify-center gap-2 text-sm"
+              >
+                <UserPlus className="w-4 h-4" />
+                Tiếp nhận bệnh nhân mới
+              </button>
+            </div>
+          )}
+
           {/* KHỐI THIẾT LẬP */}
-          <div className="px-6 py-3 border-b border-white/10 space-y-2">
+          <div className="px-6 py-4 border-b border-white/10 bg-[#162840]/40 space-y-2">
+            <div className="flex items-center gap-2 mb-2">
+              <Settings className="w-4 h-4 text-[#4dd9f0]" />
+              <h3 className="text-sm font-bold text-white tracking-wide">THIẾT LẬP TRUYỀN</h3>
+            </div>
+
             <button
               onClick={() => setHienThiModalOng(true)}
-              className="w-full flex items-center justify-between dropdown-trigger px-4 py-2.5"
+              className="w-full flex items-center justify-between rounded-lg bg-[#162840] border border-white/10 hover:border-[#4dd9f0]/40 hover:bg-[#1e3050] px-4 py-3 transition"
             >
-              <span className="param-label">Ống tiêm</span>
+              <span className="flex items-center gap-2 text-sm text-white/80">
+                <Syringe className="w-4 h-4 text-[#4dd9f0]" />
+                Ống tiêm
+              </span>
               <div className="flex items-center gap-2">
-                <span className="text-white font-medium">
+                <span className="text-white font-semibold text-sm">
                   {trangThaiESP32?.syringe || 'N/A'}
                 </span>
-                <ChevronRight className="h-4 w-4 text-white/50" />
+                <ChevronRight className="h-4 w-4 text-white/40" />
               </div>
             </button>
 
-            {/* Protocol Info */}
-            <div className="flex items-center justify-between px-4 py-2 bg-white/5 rounded-lg">
-              <span className="param-label">Đối Tượng</span>
+            {/* Đối tượng / Protocol */}
+            <div className="flex items-center justify-between rounded-lg bg-[#162840] border border-white/10 px-4 py-3">
+              <span className="flex items-center gap-2 text-sm text-white/80">
+                <User className="w-4 h-4 text-[#4dd9f0]" />
+                Đối tượng
+              </span>
               <div className="flex items-center gap-2">
                 {selectedProtocol ? (
                   <>
-                    <span className="text-xs font-medium text-[#4dd9f0]">
+                    <span className="text-xs font-semibold text-[#4dd9f0]">
                       {selectedProtocol.shortName}
                     </span>
                     {selectedProtocol.fixedRate && (
@@ -548,16 +754,23 @@ export default function App() {
                     )}
                   </>
                 ) : (
-                  <span className="text-xs text-white/50">
-                    Thủ công
-                  </span>
+                  <span className="text-xs text-white/50">Thủ công</span>
                 )}
               </div>
             </div>
           </div>
 
           {/* KHỐI SỐ LIỆU 2x2 */}
-          <div className="medical-card-inner mx-4 my-4">
+          <div className="medical-card-inner mx-4 my-4 overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-white/[0.02]">
+              <Gauge className="w-4 h-4 text-[#4dd9f0]" />
+              <h3 className="text-sm font-bold text-white tracking-wide">THÔNG SỐ TRUYỀN</h3>
+              {selectedPatient && (
+                <span className="text-xs text-[#4dd9f0] font-medium ml-auto truncate">
+                  BN: {selectedPatient.fullName} ({selectedPatient.patientId})
+                </span>
+              )}
+            </div>
             <div className="data-grid">
               {/* Tốc độ */}
               <button
@@ -574,7 +787,10 @@ export default function App() {
                     : 'Chỉnh tốc độ'
                 }
               >
-                <div className="param-label mb-2">Tốc độ truyền</div>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Gauge className="w-3.5 h-3.5 text-[#4dd9f0]/70" />
+                  <span className="param-label">Tốc độ truyền</span>
+                </div>
                 <div className="flex items-baseline">
                   <span className="value-large">
                     {trangThaiESP32?.speed_mlh.toFixed(1) || '-'}
@@ -603,7 +819,10 @@ export default function App() {
                     : 'Chỉnh thể tích'
                 }
               >
-                <div className="param-label mb-2">Thể tích truyền</div>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Droplets className="w-3.5 h-3.5 text-[#4dd9f0]/70" />
+                  <span className="param-label">Thể tích truyền</span>
+                </div>
                 <div className="flex items-baseline">
                   <span className="value-large">
                     {trangThaiESP32?.volume_ml || '-'}
@@ -619,7 +838,10 @@ export default function App() {
 
               {/* Đã truyền */}
               <div className="data-grid-cell p-4">
-                <div className="param-label mb-2">Đã truyền</div>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Check className="w-3.5 h-3.5 text-[#00cc66]/80" />
+                  <span className="param-label">Đã truyền</span>
+                </div>
                 <div className="flex items-baseline mb-3">
                   <span className="value-large">{mlDaTruyen.toFixed(1)}</span>
                   <span className="value-unit">
@@ -627,13 +849,17 @@ export default function App() {
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="progress-track flex-1">
+                  <div className="progress-track flex-1" style={{ height: '6px' }}>
                     <div
                       className="progress-fill"
-                      style={{ width: `${phanTramDaTruyen}%` }}
+                      style={{
+                        width: `${phanTramDaTruyen}%`,
+                        background: 'linear-gradient(90deg, #4dd9f0, #00cc66)',
+                        boxShadow: '0 0 8px rgba(77,217,240,0.5)',
+                      }}
                     />
                   </div>
-                  <span className="text-xs text-white/50">
+                  <span className="text-xs font-semibold text-[#4dd9f0] tabular-nums">
                     {Math.round(phanTramDaTruyen)}%
                   </span>
                 </div>
@@ -641,7 +867,10 @@ export default function App() {
 
               {/* Thời gian */}
               <div className="data-grid-cell p-4">
-                <div className="param-label mb-2">Thời gian còn lại</div>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Clock className="w-3.5 h-3.5 text-[#4dd9f0]/70" />
+                  <span className="param-label">Thời gian còn lại</span>
+                </div>
                 <div className="flex items-baseline mb-3">
                   <span className="value-large">
                     {formatThoiGian(trangThaiESP32?.remaining_sec || 0)}
@@ -655,7 +884,7 @@ export default function App() {
                       trangThaiESP32?.state === 'READY' &&
                       trangThaiESP32?.contact_found
                     ) {
-                      batDauBom()
+                      batDauBom(selectedPatient ? { patientId: selectedPatient.patientId, fullName: selectedPatient.fullName } : undefined)
                     }
                   }}
                   disabled={
@@ -790,6 +1019,11 @@ export default function App() {
           <div className="medical-card-inner mx-4 mb-4 p-4">
             <div className="text-xs text-white/60 uppercase tracking-wide mb-3 text-center">
               ĐIỀU KHIỂN BƠM
+              {selectedPatient && (
+                <span className="text-[#4dd9f0] normal-case font-medium ml-1.5">
+                  · {selectedPatient.fullName}
+                </span>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               {/* Nút TIẾP TỤC - Active khi paused */}
@@ -1126,6 +1360,13 @@ export default function App() {
         onSelectProtocol={handleSelectProtocol}
       />
 
+      {/* PATIENT REGISTRATION DIALOG */}
+      <PatientRegistrationDialog
+        isOpen={hienThiDangKyBN}
+        onClose={() => setHienThiDangKyBN(false)}
+        onSuccess={handlePatientRegistration}
+      />
+
       {/* MODAL HOÀN TẤT */}
       {hienThiModalHoanTat && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
@@ -1183,7 +1424,7 @@ export default function App() {
               <button
                 onClick={() => {
                   xacNhanBaoDong()
-                  setHienThiModalHoanTat(false)
+                  themLog('thanh_cong', 'Đã tắt âm cảnh báo hoàn thành')
                 }}
                 className="btn-secondary py-3 font-semibold"
               >
@@ -1234,7 +1475,7 @@ export default function App() {
             <button
               onClick={() => {
                 setHienThiPopupXacNhan(false)
-                batDauBom()
+                batDauBom(selectedPatient ? { patientId: selectedPatient.patientId, fullName: selectedPatient.fullName } : undefined)
               }}
               className="flex-1 py-3 bg-cyan-400 text-black font-bold rounded hover:bg-cyan-500"
             >
@@ -1445,7 +1686,6 @@ export default function App() {
                     onClick={() => {
                       if (giaTriNhap <= (chinhSuaSyringe === 0 ? 300 : 600)) {
                         setChinhSuaSpeed(giaTriNhap)
-                        setGiaTriTam(giaTriNhap)
                         setHienThiModalTocDo(false)
                         setNhapTay(false)
                       }

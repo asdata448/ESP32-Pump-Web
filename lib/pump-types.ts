@@ -86,8 +86,8 @@ export interface InfusionProtocol {
 export const PROTOCOLS: InfusionProtocol[] = [
   {
     id: 'ADULT_ACUTE_SLOW',
-    displayName: 'Người lớn đau cấp',
-    shortName: 'Người lớn đau cấp',
+    displayName: 'Người lớn cấp cứu',
+    shortName: 'Người lớn cấp cứu',
     syringeIndex: 0,
     defaultRate: 1.0,
     minRate: 1.0,
@@ -99,8 +99,8 @@ export const PROTOCOLS: InfusionProtocol[] = [
   },
   {
     id: 'ADULT_ACUTE_AVG',
-    displayName: 'Người lớn đau cấp',
-    shortName: 'Người lớn đau cấp',
+    displayName: 'Người lớn cấp cứu',
+    shortName: 'Người lớn cấp cứu',
     syringeIndex: 1,
     defaultRate: 2.0,
     minRate: 1.0,
@@ -164,7 +164,7 @@ export const PROTOCOLS: InfusionProtocol[] = [
   },
   {
     id: 'PEDIATRIC_10CC',
-    displayName: 'Nhi khoa/kháng sinh ngắt quãng',
+    displayName: 'Nhi khoa/kháng sinh',
     shortName: 'Nhi khoa/Kháng sinh',
     syringeIndex: 0,
     defaultRate: 10.0,
@@ -177,7 +177,7 @@ export const PROTOCOLS: InfusionProtocol[] = [
   },
   {
     id: 'PEDIATRIC_20CC',
-    displayName: 'Nhi khoa/kháng sinh ngắt quãng',
+    displayName: 'Nhi khoa/kháng sinh',
     shortName: 'Nhi khoa/Kháng sinh',
     syringeIndex: 1,
     defaultRate: 20.0,
@@ -258,6 +258,121 @@ export const GPIO_PINS = {
   T_IRQ: 27,
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// PATIENT MANAGEMENT SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Patient gender type
+export type PatientGender = 'male' | 'female' | 'other'
+
+// Pump session status
+export type PumpSessionStatus = 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'paused'
+
+// Patient ID parts (for parsing composite IDs)
+export interface PatientIdParts {
+  departmentCode: string
+  patientNumber: string
+  year: string
+}
+
+// Core Patient interface
+export interface Patient {
+  id: string                    // Unique patient ID (format: DEPT-PATIENT_NUM-YEAR, e.g., "ICU-001-2026")
+  name: string                  // Patient full name
+  gender: PatientGender         // Patient gender
+  age: number                   // Patient age (years)
+  weight?: number               // Weight in kg (optional)
+  department?: string           // Department/ward (e.g., "ICU", "NICU", "Emergency")
+  room?: string                 // Room number
+  bed?: string                  // Bed number
+  admissionDate?: string        // ISO 8601 date string
+  dischargeDate?: string        // ISO 8601 date string
+  notes?: string                // Additional notes
+  createdAt: string             // ISO 8601 timestamp when record created
+  updatedAt: string             // ISO 8601 timestamp when last updated
+  createdBy?: string            // User ID who created the record
+}
+
+// Patient registration form data
+export interface PatientRegistrationForm {
+  name: string
+  gender: PatientGender
+  age: number
+  weight?: number
+  department?: string
+  room?: string
+  bed?: string
+  notes?: string
+}
+
+// Pump session interface
+export interface PumpSession {
+  id: string                    // Unique session ID
+  patientId: string             // Reference to Patient.id
+  patientName: string           // Denormalized for quick display
+  protocolId: ProtocolId        // Protocol used
+  protocolName?: string         // Protocol display name
+  syringeType: SyringeType      // Syringe used
+  speed: number                 // Infusion rate (ml/h)
+  volume: number                // Total volume (ml)
+  status: PumpSessionStatus     // Current status
+  startTime?: string            // ISO 8601 timestamp
+  endTime?: string              // ISO 8601 timestamp
+  duration?: number             // Duration in seconds
+  infusedVolume?: number        // Volume actually infused
+  remainingVolume?: number      // Volume remaining
+  notes?: string                // Session notes
+  createdAt: string             // ISO 8601 timestamp
+  updatedAt: string             // ISO 8601 timestamp
+  completedBy?: string           // User ID who completed the session
+}
+
+// Search parameters for patient queries
+export interface PatientSearchParams {
+  name?: string                 // Search by patient name (partial match)
+  department?: string           // Filter by department
+  room?: string                 // Filter by room
+  bed?: string                  // Filter by bed
+  gender?: PatientGender        // Filter by gender
+  minAge?: number              // Minimum age
+  maxAge?: number              // Maximum age
+  admissionDateFrom?: string   // ISO 8601 date string
+  admissionDateTo?: string     // ISO 8601 date string
+  discharged?: boolean         // Filter by discharge status
+  limit?: number               // Max results (default: 50)
+  offset?: number              // Pagination offset (default: 0)
+  sortBy?: 'name' | 'age' | 'admissionDate' | 'department'
+  sortOrder?: 'asc' | 'desc'
+}
+
+// Patient history response
+export interface PatientHistoryResponse {
+  patient: Patient
+  sessions: PumpSession[]
+  totalSessions: number
+  totalVolumeInfused: number
+  averageSessionDuration?: number
+  lastSessionDate?: string
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EXTENDED TYPES - Patient Context Integration
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Extended PumpStatus with patient context
+export interface PumpStatusWithPatient extends PumpStatus {
+  patientId?: string           // Current patient ID (if session active)
+  sessionId?: string           // Current session ID (if session active)
+  patientName?: string         // Patient name for display
+  sessionStatus?: PumpSessionStatus
+}
+
+// Extended PumpConfig with patient reference
+export interface PumpConfigWithPatient extends PumpConfig {
+  patientId?: string           // Patient ID for this configuration
+  sessionId?: string           // Session ID (if starting from existing session)
+}
+
 // API Response types
 export interface PumpStatus {
   state: PumpState
@@ -298,7 +413,99 @@ export interface HistoryEntry {
   total_sec: number
   syringe: SyringeType
   timestamp?: string
+  patientId?: string           // Patient associated with this entry
+  patientName?: string         // Patient name denormalized
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FIREBASE DATA TYPES
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Firebase document types (for Firestore)
+export interface FirebasePatientDocument {
+  id: string
+  fields: {
+    name: { stringValue: string }
+    gender: { stringValue: PatientGender }
+    age: { integerValue: string }
+    weight?: { doubleValue: number }
+    department?: { stringValue: string }
+    room?: { stringValue: string }
+    bed?: { stringValue: string }
+    admissionDate?: { timestampValue: string }
+    dischargeDate?: { timestampValue: string }
+    notes?: { stringValue: string }
+    createdAt: { timestampValue: string }
+    updatedAt: { timestampValue: string }
+    createdBy?: { stringValue: string }
+  }
+  createTime: string
+  updateTime: string
+}
+
+export interface FirebaseSessionDocument {
+  id: string
+  fields: {
+    patientId: { stringValue: string }
+    patientName: { stringValue: string }
+    protocolId: { stringValue: ProtocolId }
+    protocolName?: { stringValue: string }
+    syringeType: { stringValue: SyringeType }
+    speed: { doubleValue: number }
+    volume: { doubleValue: number }
+    status: { stringValue: PumpSessionStatus }
+    startTime?: { timestampValue: string }
+    endTime?: { timestampValue: string }
+    duration?: { integerValue: string }
+    infusedVolume?: { doubleValue: number }
+    remainingVolume?: { doubleValue: number }
+    notes?: { stringValue: string }
+    createdAt: { timestampValue: string }
+    updatedAt: { timestampValue: string }
+    completedBy?: { stringValue: string }
+  }
+  createTime: string
+  updateTime: string
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// API RESPONSE TYPES
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface PatientListResponse {
+  patients: Patient[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export interface PatientCreateResponse {
+  success: boolean
+  patient?: Patient
+  error?: string
+}
+
+export interface PatientUpdateResponse {
+  success: boolean
+  patient?: Patient
+  error?: string
+}
+
+export interface SessionCreateResponse {
+  success: boolean
+  session?: PumpSession
+  error?: string
+}
+
+export interface SessionUpdateResponse {
+  success: boolean
+  session?: PumpSession
+  error?: string
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CHART DATA TYPES
+// ═══════════════════════════════════════════════════════════════════════════
 
 // FSR data point for charts
 export interface FSRDataPoint {
@@ -313,7 +520,18 @@ export interface ProgressDataPoint {
   volume: number
 }
 
-// Default/mock values
+// Patient session statistics for charts
+export interface PatientSessionStats {
+  date: string
+  sessionCount: number
+  totalVolume: number
+  averageDuration: number
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DEFAULT/MOCK VALUES
+// ═══════════════════════════════════════════════════════════════════════════
+
 export const DEFAULT_STATUS: PumpStatus = {
   state: 'MAIN',
   syringe: '10CC',
@@ -347,7 +565,38 @@ export const DEFAULT_CONFIG: PumpConfig = {
   volume_ml: 5,
 }
 
-// Helper functions
+export const DEFAULT_PATIENT: Omit<Patient, 'id' | 'createdAt' | 'updatedAt'> = {
+  name: '',
+  gender: 'other',
+  age: 0,
+  weight: undefined,
+  department: '',
+  room: '',
+  bed: '',
+  admissionDate: undefined,
+  dischargeDate: undefined,
+  notes: '',
+}
+
+export const DEFAULT_SESSION: Omit<PumpSession, 'id' | 'patientId' | 'createdAt' | 'updatedAt'> = {
+  patientName: '',
+  protocolId: 'MANUAL',
+  syringeType: '10CC',
+  speed: 1.0,
+  volume: 5,
+  status: 'scheduled',
+  startTime: undefined,
+  endTime: undefined,
+  duration: undefined,
+  infusedVolume: 0,
+  remainingVolume: 5,
+  notes: '',
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
 export function formatTime(seconds: number): string {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
@@ -407,4 +656,104 @@ export function getStateBgColor(state: PumpState): string {
     default:
       return 'bg-muted'
   }
+}
+
+// Patient ID generator
+export function generatePatientId(
+  department: string,
+  patientNumber: string,
+  year?: string
+): string {
+  const currentYear = year || new Date().getFullYear().toString()
+  return `${department.toUpperCase()}-${patientNumber}-${currentYear}`
+}
+
+// Parse patient ID into components
+export function parsePatientId(patientId: string): PatientIdParts | null {
+  const parts = patientId.split('-')
+  if (parts.length !== 3) return null
+  const [departmentCode, patientNumber, year] = parts
+  return { departmentCode, patientNumber, year }
+}
+
+// Format patient display name
+export function formatPatientDisplayName(patient: Patient): string {
+  const ageStr = `${patient.age}yo`
+  const genderStr = patient.gender === 'male' ? 'M' : patient.gender === 'female' ? 'F' : 'O'
+  return `${patient.name} (${ageStr}, ${genderStr})`
+}
+
+// Calculate session duration
+export function calculateSessionDuration(startTime: string, endTime?: string): number {
+  const start = new Date(startTime).getTime()
+  const end = endTime ? new Date(endTime).getTime() : Date.now()
+  return Math.floor((end - start) / 1000) // Return in seconds
+}
+
+// Get session status color
+export function getSessionStatusColor(status: PumpSessionStatus): string {
+  switch (status) {
+    case 'completed':
+      return 'text-success'
+    case 'in_progress':
+      return 'text-primary'
+    case 'paused':
+      return 'text-warning-foreground'
+    case 'cancelled':
+      return 'text-destructive'
+    case 'scheduled':
+    default:
+      return 'text-muted-foreground'
+  }
+}
+
+// Get session status background color
+export function getSessionStatusBgColor(status: PumpSessionStatus): string {
+  switch (status) {
+    case 'completed':
+      return 'bg-success/10'
+    case 'in_progress':
+      return 'bg-primary/10'
+    case 'paused':
+      return 'bg-warning/10'
+    case 'cancelled':
+      return 'bg-destructive/10'
+    case 'scheduled':
+    default:
+      return 'bg-muted'
+  }
+}
+
+// Validate patient data
+export function validatePatientData(data: PatientRegistrationForm): { valid: boolean; errors: string[] } {
+  const errors: string[] = []
+
+  if (!data.name || data.name.trim().length === 0) {
+    errors.push('Patient name is required')
+  }
+
+  if (data.age < 0 || data.age > 150) {
+    errors.push('Age must be between 0 and 150')
+  }
+
+  if (data.weight !== undefined && (data.weight < 0 || data.weight > 300)) {
+    errors.push('Weight must be between 0 and 300 kg')
+  }
+
+  if (!['male', 'female', 'other'].includes(data.gender)) {
+    errors.push('Invalid gender value')
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors
+  }
+}
+
+// Generate session summary
+export function generateSessionSummary(session: PumpSession): string {
+  const duration = session.duration || calculateSessionDuration(session.startTime!, session.endTime)
+  const timeStr = formatTime(duration)
+  const volumeStr = `${session.infusedVolume || 0}/${session.volume}ml`
+  return `${volumeStr} in ${timeStr}`
 }

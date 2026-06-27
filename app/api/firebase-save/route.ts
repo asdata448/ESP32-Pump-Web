@@ -5,7 +5,7 @@ import { mockState } from '../status/route'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { deviceId, overrideData } = body
+    const { deviceId, overrideData, patientId, patientName } = body
 
     // Get current state from ESP32 or use override data
     const currentState = overrideData || mockState
@@ -48,6 +48,9 @@ export async function POST(request: Request) {
       deviceId: deviceId || 'esp32-pump-default',
       notes: body.notes || undefined,
       errorType: currentState.fsr_alert ? 'OCCLUSION_DETECTED' : undefined,
+      // Patient linkage (optional — only when a patient is selected)
+      patientId: patientId || undefined,
+      patientName: patientName || undefined,
     })
 
     // Save to Firebase

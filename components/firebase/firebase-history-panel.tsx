@@ -208,11 +208,11 @@ export function FirebaseHistoryPanel({
               <div>
                 <CardTitle>Lịch sử Firebase</CardTitle>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {deviceId ? `Thiết bị: ${deviceId}` : 'Dữ liệu từ Firestore'}
+                  {deviceId ? `Thiết bị: ${deviceId}` : 'Dữ liệu từ Firestore'} · Đã truyền tổng {stats.totalVolume.toFixed(1)} ml
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {onRefresh && (
                 <Button variant="outline" size="icon" onClick={onRefresh} disabled={loading} className="h-8 w-8">
                   <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -287,48 +287,29 @@ export function FirebaseHistoryPanel({
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-primary">{stats.total}</div>
-            <div className="text-xs text-muted-foreground mt-1">Tổng phiên</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-success">{stats.completed}</div>
-            <div className="text-xs text-muted-foreground mt-1">Hoàn thành</div>
+          <CardContent className="p-3 sm:p-4">
+            <div className="text-xl sm:text-2xl font-bold text-primary">{stats.total}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Tổng phiên</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-warning">{stats.stopped}</div>
-            <div className="text-xs text-muted-foreground mt-1">Đã dừng</div>
+          <CardContent className="p-3 sm:p-4">
+            <div className="text-xl sm:text-2xl font-bold text-success">{stats.completed}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Hoàn thành</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-destructive">{stats.error}</div>
-            <div className="text-xs text-muted-foreground mt-1">Lỗi</div>
-          </CardContent>
-        </Card>
-        {/* NEW: Data source stats */}
-        <Card className="bg-purple-500/5 border-purple-500/20">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-purple-400">{stats.demoCount}</div>
-            <div className="text-xs text-muted-foreground mt-1">🧪 Demo</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-cyan-500/5 border-cyan-500/20">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-cyan-400">{stats.realCount}</div>
-            <div className="text-xs text-muted-foreground mt-1">🔴 Thật</div>
+          <CardContent className="p-3 sm:p-4">
+            <div className="text-xl sm:text-2xl font-bold text-warning">{stats.stopped}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Đã dừng</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-cyan-400">{stats.totalVolume.toFixed(1)}ml</div>
-            <div className="text-xs text-muted-foreground mt-1">Tổng thể tích</div>
+          <CardContent className="p-3 sm:p-4">
+            <div className="text-xl sm:text-2xl font-bold text-destructive">{stats.error}</div>
+            <div className="text-xs text-muted-foreground mt-0.5">Lỗi</div>
           </CardContent>
         </Card>
       </div>
@@ -442,26 +423,26 @@ export function FirebaseHistoryPanel({
                           {formatFirebaseTimestamp(record.timestamp)}
                         </span>
                       </div>
-                      <div className="grid grid-cols-4 gap-3 text-sm">
-                        <div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                        <div className="min-w-0">
                           <div className="text-muted-foreground text-xs">Ống tiêm</div>
-                          <div className="font-medium">{record.syringeType || 'N/A'}</div>
+                          <div className="font-medium truncate">{record.syringeType || 'N/A'}</div>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <div className="text-muted-foreground text-xs">Tốc độ</div>
                           <div className="font-medium flex items-center gap-1">
                             <Gauge className="h-3 w-3" />
                             {record.speedMlh ?? 0} ml/h
                           </div>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <div className="text-muted-foreground text-xs">Thể tích</div>
                           <div className="font-medium flex items-center gap-1">
                             <Droplets className="h-3 w-3" />
                             {record.volumeMl ?? 0} ml
                           </div>
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <div className="text-muted-foreground text-xs">Đã truyền</div>
                           <div className="font-medium text-success">
                             {(record.infusedVolumeMl ?? 0).toFixed(1)} ml
@@ -490,21 +471,15 @@ export function FirebaseHistoryPanel({
                         className="overflow-hidden"
                       >
                         <div className="pt-4 mt-4 border-t border-border">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                            <div>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="min-w-0">
                               <div className="text-muted-foreground text-xs mb-1">Thời gian chạy</div>
                               <div className="flex items-center gap-1.5 font-medium">
                                 <Clock className="h-3.5 w-3.5 text-primary" />
                                 {Math.floor((record.totalTimeSec ?? 0) / 60)}p {((record.totalTimeSec ?? 0) % 60).toFixed(0)}s
                               </div>
                             </div>
-                            <div>
-                              <div className="text-muted-foreground text-xs mb-1">Thiết bị</div>
-                              <div className="font-medium text-xs font-mono">
-                                {record.deviceIdString || record.deviceId || 'Unknown'}
-                              </div>
-                            </div>
-                            <div>
+                            <div className="min-w-0">
                               <div className="text-muted-foreground text-xs mb-1">Tỷ lệ hoàn thành</div>
                               <div className="font-medium">
                                 {record.volumeMl > 0
@@ -512,9 +487,15 @@ export function FirebaseHistoryPanel({
                                   : '0'}%
                               </div>
                             </div>
-                            <div>
+                            <div className="min-w-0">
+                              <div className="text-muted-foreground text-xs mb-1">Thiết bị</div>
+                              <div className="font-medium text-xs font-mono break-all">
+                                {record.deviceIdString || record.deviceId || 'Unknown'}
+                              </div>
+                            </div>
+                            <div className="min-w-0">
                               <div className="text-muted-foreground text-xs mb-1">Document ID</div>
-                              <div className="font-medium text-xs font-mono">
+                              <div className="font-medium text-xs font-mono break-all">
                                 {record.id || 'N/A'}
                               </div>
                             </div>

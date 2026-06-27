@@ -1,26 +1,29 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { AlertTriangle, Clock, Sliders } from 'lucide-react'
+import { AlertTriangle, Clock, Sliders, User } from 'lucide-react'
 import type { PumpStatus, HistoryEntry } from '@/lib/pump-types'
-import { 
-  SYRINGE_SPECS, 
-  formatTime, 
-  calculateProgress, 
+import {
+  SYRINGE_SPECS,
+  formatTime,
+  calculateProgress,
   calculateInfusedVolume,
   STATE_LABELS
 } from '@/lib/pump-types'
+import type { Patient } from '@/components/patients/patient-info-card'
 
 interface MonitoringPanelProps {
   status: PumpStatus
   history: HistoryEntry[]
+  patient?: Patient | null
   onControlClick: () => void
 }
 
-export function MonitoringPanel({ 
-  status, 
+export function MonitoringPanel({
+  status,
   history,
-  onControlClick 
+  patient,
+  onControlClick
 }: MonitoringPanelProps) {
   const [currentTime, setCurrentTime] = useState('--:--:--')
   
@@ -71,6 +74,22 @@ export function MonitoringPanel({
 
   return (
     <div className="medical-panel p-4">
+      {/* Patient Info (if selected) */}
+      {patient && (
+        <div className="mb-4 p-3 rounded-lg bg-primary/10 border border-primary/30">
+          <div className="flex items-center gap-2 mb-2">
+            <User className="h-4 w-4 text-primary" />
+            <span className="text-sm font-semibold text-primary">Bệnh nhân</span>
+          </div>
+          <div className="text-sm text-white">
+            <div className="font-medium">{patient.fullName}</div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {patient.patientId} • {patient.gender === 'male' ? 'Nam' : 'Nữ'} • {patient.weight} kg
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Syringe Type Header */}
       <div className="syringe-header mb-4">
         <span className="text-sm text-muted-foreground">Ống: </span>

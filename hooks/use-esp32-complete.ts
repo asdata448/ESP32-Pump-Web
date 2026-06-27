@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
@@ -19,6 +19,7 @@ import {
   type ESP32DeviceStatus,
   type ESP32Command,
 } from '@/lib/firebase'
+import { chuanHoaTenAscii } from '@/lib/patient-utils'
 
 /**
  * Fetch với timeout 5 giây dùng AbortController
@@ -279,10 +280,27 @@ export function useESP32(): TrangThaiUseESP32 {
   }, [callApi, themLog])
 
   // BẮT ĐẦU BƠM
-  const batDauBom = useCallback(async () => {
-    await callApi('/api/start')
-    themLog('thanh_cong', 'Bắt đầu truyền dịch')
-  }, [callApi, themLog])
+  const batDauBom = useCallback(
+    async (benhNhan?: { patientId?: string; fullName?: string }) => {
+      if (!cauHinhKetNoi.daKetNoi) throw new Error('Khong ket noi ESP32')
+
+      const body = JSON.stringify({
+        patient_id: benhNhan?.patientId ?? '',
+        patient_name: chuanHoaTenAscii(benhNhan?.fullName),
+      })
+
+      const url = `${cauHinhKetNoi.baseUrl}/api/start`
+      const res = await fetchVoiTimeout(url, { method: 'POST', body }, 5000)
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        throw new Error(json.error || `HTTP ${res.status}`)
+      }
+
+      themLog('thanh_cong', 'Bat dau truyen dich')
+    },
+    [cauHinhKetNoi, themLog]
+  )
 
   // TẠM DỪNG
   const tamDung = useCallback(async () => {
@@ -493,9 +511,18 @@ export function useESP32(): TrangThaiUseESP32 {
     return await guiLenhFirebase({ type: 'PREPARE' })
   }, [guiLenhFirebase])
 
-  const batDauBomFirebase = useCallback(async () => {
-    return await guiLenhFirebase({ type: 'START' })
-  }, [guiLenhFirebase])
+  const batDauBomFirebase = useCallback(
+    async (benhNhan?: { patientId?: string; fullName?: string }) => {
+      return await guiLenhFirebase({
+        type: 'START',
+        params: {
+          patient_id: benhNhan?.patientId ?? '',
+          patient_name: chuanHoaTenAscii(benhNhan?.fullName),
+        },
+      })
+    },
+    [guiLenhFirebase]
+  )
 
   const tamDungFirebase = useCallback(async () => {
     return await guiLenhFirebase({ type: 'PAUSE' })
@@ -532,12 +559,15 @@ export function useESP32(): TrangThaiUseESP32 {
     return await chuanBi()
   }, [cheDoKetNoi, chuanBiFirebase, chuanBi])
 
-  const batDauBomWrapper = useCallback(async () => {
-    if (cheDoKetNoi === 'FIREBASE') {
-      return await batDauBomFirebase()
-    }
-    return await batDauBom()
-  }, [cheDoKetNoi, batDauBomFirebase, batDauBom])
+  const batDauBomWrapper = useCallback(
+    async (benhNhan?: { patientId?: string; fullName?: string }) => {
+      if (cheDoKetNoi === 'FIREBASE') {
+        return await batDauBomFirebase(benhNhan)
+      }
+      return await batDauBom(benhNhan)
+    },
+    [cheDoKetNoi, batDauBomFirebase, batDauBom]
+  )
 
   const tamDungWrapper = useCallback(async () => {
     if (cheDoKetNoi === 'FIREBASE') {
@@ -582,21 +612,16 @@ export function useESP32(): TrangThaiUseESP32 {
       setDeviceId(savedDeviceId)
     }
 
-    // Load connection mode from localStorage
-    const savedMode = localStorage.getItem('esp32_connection_mode')
-    if (savedMode === 'HTTP' || savedMode === 'FIREBASE') {
-      setCheDoKetNoi(savedMode)
-    }
+    // Mặc định WiFi Direct (HTTP). KHÔNG bao giờ tự vào chế độ Firebase Cloud nữa.
+    setCheDoKetNoi('HTTP')
 
-    // Load HTTP base URL from localStorage (for HTTP mode)
+    // Chỉ tự kết nối lại khi trước đó đã dùng HTTP (WiFi Direct) và còn lưu base URL
+    const savedMode = localStorage.getItem('esp32_connection_mode')
     const savedBaseUrl = localStorage.getItem('esp32_base_url')
-    if (savedBaseUrl && savedMode === 'HTTP') {
+    if (savedMode === 'HTTP' && savedBaseUrl) {
       ketNoi(savedBaseUrl.replace('http://', ''))
-    } else if (savedDeviceId && savedMode === 'FIREBASE') {
-      // Auto-connect to Firebase if device ID exists
-      ketNoiFirebase(savedDeviceId)
     }
-  }, [ketNoi, ketNoiFirebase])
+  }, [ketNoi])
 
   // ===== RETURN =====
   return {

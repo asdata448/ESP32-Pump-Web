@@ -1,15 +1,17 @@
 'use client'
 
-import { History, Clock, Droplets, Gauge, Syringe } from 'lucide-react'
+import { History, Clock, Droplets, Gauge, Syringe, User } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { HistoryEntry } from '@/lib/pump-types'
 import { formatTime } from '@/lib/pump-types'
+import type { Patient } from '@/components/patients/patient-info-card'
 
 interface HistoryCardProps {
   history: HistoryEntry[]
+  patient?: Patient | null
 }
 
-export function HistoryCard({ history }: HistoryCardProps) {
+export function HistoryCard({ history, patient }: HistoryCardProps) {
   if (history.length === 0) {
     return (
       <Card>
@@ -31,10 +33,18 @@ export function HistoryCard({ history }: HistoryCardProps) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <History className="h-5 w-5" />
-          Lịch sử (5 lần gần nhất)
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <History className="h-5 w-5" />
+            Lịch sử (5 lần gần nhất)
+          </CardTitle>
+          {patient && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <User className="h-3 w-3" />
+              <span className="font-mono">{patient.patientId}</span>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">

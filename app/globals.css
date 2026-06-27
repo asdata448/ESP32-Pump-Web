@@ -210,6 +210,77 @@
   border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
 }
 
+/* ===== MEDICAL UI (component shadcn-style: dialog, search, info card, table) ===== */
+/* Đồng bộ style với theme y tế cam/cyan/navy của project */
+
+.medical-input {
+  background: #162840;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-xs);
+  color: #ffffff;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.95rem;
+  width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.medical-input::placeholder { color: rgba(255, 255, 255, 0.3); }
+.medical-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(77, 217, 240, 0.15);
+}
+.medical-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Nút chính - cam (Lưu hồ sơ, Xác nhận...) */
+.medical-button {
+  background: var(--action);
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  padding: 0.625rem 1rem;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 12px rgba(240, 112, 32, 0.3);
+}
+.medical-button:hover:not(:disabled) {
+  background: #ff8030;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(240, 112, 32, 0.4);
+}
+.medical-button:active:not(:disabled) { transform: scale(0.97); }
+.medical-button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Nút viền - (Hủy, Đóng...) */
+.medical-button-outline {
+  background: transparent;
+  color: #ffffff;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-sm);
+  padding: 0.625rem 1rem;
+  transition: all 0.15s ease;
+}
+.medical-button-outline:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+.medical-button-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Calendar chọn ngày sinh */
+.medical-calendar {
+  background: #1e3050;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: #ffffff;
+}
+.medical-calendar .rdp-day_selected,
+.medical-calendar [data-selected] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
 /* ===== THANH TIẾN TRÌNH ===== */
 
 .progress-track {
@@ -416,4 +487,267 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #4a6080;
+}
+
+/* ===== INTRO / SPLASH SCREEN ===== */
+
+.intro-bg-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(rgba(77, 217, 240, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(77, 217, 240, 0.05) 1px, transparent 1px);
+  background-size: 52px 52px;
+  -webkit-mask-image: radial-gradient(ellipse 65% 60% at 50% 38%, #000 30%, transparent 80%);
+  mask-image: radial-gradient(ellipse 65% 60% at 50% 38%, #000 30%, transparent 80%);
+}
+
+.intro-halo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 340px;
+  height: 340px;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(77, 217, 240, 0.18) 0%, rgba(77, 217, 240, 0.04) 40%, transparent 70%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.intro-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 1px solid rgba(77, 217, 240, 0.3);
+  pointer-events: none;
+}
+
+/* Glow dạng ellipse phía sau máy bơm (intro focal) */
+.intro-device-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 320px;
+  height: 160px;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: radial-gradient(ellipse at center, rgba(77, 217, 240, 0.22) 0%, rgba(77, 217, 240, 0.05) 42%, transparent 72%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+/* Ảnh máy bơm nền trong suốt — nổi (intro focal) */
+.intro-product-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 138px;
+  height: 138px;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  border: 1px solid rgba(77, 217, 240, 0.16);
+  box-shadow: inset 0 0 36px rgba(77, 217, 240, 0.08);
+  pointer-events: none;
+}
+.intro-product-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 190px;
+  height: 190px;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(77, 217, 240, 0.3) 0%, rgba(77, 217, 240, 0.07) 40%, transparent 70%);
+  filter: blur(12px);
+  pointer-events: none;
+}
+.intro-product-img {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: clamp(108px, 32vw, 132px);
+  height: auto;
+  object-fit: contain;
+}
+
+/* Khung ảnh máy bơm (intro focal) — cũ, giữ lại */
+.intro-photo-frame {
+  width: clamp(250px, 72vw, 320px);
+  aspect-ratio: 4 / 3;
+  border-radius: 18px;
+  border: 1.5px solid rgba(77, 217, 240, 0.45);
+  background: #0d1b35;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 18px 40px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(77, 217, 240, 0.2);
+}
+.intro-photo-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 42%; /* crop hơi lên giữa để sát máy bơm */
+}
+.intro-photo-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 42%, transparent 38%, rgba(13, 27, 53, 0.5) 76%, rgba(13, 27, 53, 0.92) 100%);
+}
+.intro-photo-tint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(77, 217, 240, 0.08), transparent 35%);
+  mix-blend-mode: screen;
+}
+
+.intro-title {
+  font-size: clamp(1.9rem, 6vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  background: linear-gradient(120deg, #4dd9f0 0%, #ffffff 55%, #4dd9f0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(77, 217, 240, 0.15);
+}
+
+.intro-subtitle {
+  margin-top: 0.5rem;
+  font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: 0.04em;
+}
+
+.intro-tagline {
+  margin-top: 1rem;
+  max-width: 32rem;
+  font-size: clamp(0.82rem, 2vw, 0.95rem);
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.intro-feature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.85rem 0.6rem;
+  text-align: center;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(30, 48, 80, 0.6), rgba(22, 40, 64, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.intro-feature:hover {
+  border-color: color-mix(in srgb, var(--accent, #4dd9f0) 45%, transparent);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
+}
+.intro-feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent, #4dd9f0) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, #4dd9f0) 30%, transparent);
+}
+.intro-feature-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+.intro-feature-desc {
+  font-size: 0.7rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.intro-cta {
+  position: relative;
+  letter-spacing: 0.04em;
+  overflow: hidden;
+}
+.intro-cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.7s ease;
+}
+.intro-cta:hover::after {
+  transform: translateX(120%);
+}
+
+.intro-footer {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ===== BẢNG THÔNG TIN GVHD / SVTH (intro) ===== */
+.intro-info-table {
+  border: 1px dashed rgba(77, 217, 240, 0.32);
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(30, 48, 80, 0.55), rgba(22, 40, 64, 0.55));
+  backdrop-filter: blur(6px);
+}
+.intro-info-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) auto minmax(0, 1.4fr);
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.36rem 0.85rem;
+}
+.intro-info-row + .intro-info-row {
+  border-top: 1px dashed rgba(255, 255, 255, 0.14);
+}
+.intro-info-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.02em;
+}
+.intro-info-label em {
+  font-style: italic;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.66rem;
+}
+.intro-info-colon {
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 600;
+}
+.intro-info-value {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+@media (max-width: 600px) {
+  .intro-feature-desc {
+    display: none;
+  }
+  .intro-halo {
+    width: 260px;
+    height: 260px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-title {
+    animation: none;
+  }
 }

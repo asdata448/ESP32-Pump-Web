@@ -34,10 +34,10 @@ export function ProtocolSelectionDialog({
   )
 
   const groupedProtocols = [
-    { category: 'Người lớn cấp cứu', protocols: compatibleProtocols.filter(p => p.id.startsWith('ADULT_ACUTE')) },
-    { category: 'ICU người lớn thở máy', protocols: compatibleProtocols.filter(p => p.id.startsWith('ICU_VENT')) },
-    { category: 'ICU sốc người lớn', protocols: compatibleProtocols.filter(p => p.id.startsWith('ICU_SHOCK')) },
-    { category: 'Nhi khoa/Kháng sinh', protocols: compatibleProtocols.filter(p => p.id.startsWith('PEDIATRIC')) },
+    { category: '', protocols: compatibleProtocols.filter(p => p.id.startsWith('ADULT_ACUTE')) },
+    { category: '', protocols: compatibleProtocols.filter(p => p.id.startsWith('ICU_VENT')) },
+    { category: '', protocols: compatibleProtocols.filter(p => p.id.startsWith('ICU_SHOCK')) },
+    { category: '', protocols: compatibleProtocols.filter(p => p.id.startsWith('PEDIATRIC')) },
     { category: 'Sơ sinh/NICU', protocols: compatibleProtocols.filter(p => p.id === 'NEONATAL_NICU') },
     { category: 'Sau mổ/PCA', protocols: compatibleProtocols.filter(p => p.id === 'POST_OP_PCA') },
   ].filter(g => g.protocols.length > 0)

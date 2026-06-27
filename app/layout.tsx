@@ -14,21 +14,8 @@ export const metadata: Metadata = {
   description: 'Hệ thống giám sát và điều khiển máy bơm tiêm điện qua WiFi',
   generator: 'v0.app',
   icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
+    icon: '/ute-logo.png',
+    apple: '/ute-logo.png',
   },
 }
 
